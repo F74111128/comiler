@@ -114,6 +114,22 @@ GlobalStatement
     }
      OPTIONAL_NEWLINE GlobalStatementList '}' { dump_symbol(); }OPTIONAL_NEWLINE
     | OPTIONAL_NEWLINE
+    | IfStatement
+;
+
+IfStatement
+    : IF  Expr  '{' {
+        scope_level++;
+        create_symbol();
+        }
+        GlobalStatementList '}'{dump_symbol();}
+    | IfStatement ELSE '{' 
+        {
+        scope_level++;
+        create_symbol();
+        }
+         GlobalStatementList '}'{dump_symbol();}
+    | OPTIONAL_NEWLINE
 ;
 
 FunctionDeclStmt
