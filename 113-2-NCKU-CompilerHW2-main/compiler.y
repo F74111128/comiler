@@ -77,8 +77,7 @@
 %token <s_val> IDENT
 
 /* Nonterminal with return, which need to sepcify type */
-%type <s_val> Type
-
+%type <s_val> Type Expr LORExpr LANDExpr EqualityExpr RelExpr AddExpr Term Factor
 /* Yacc will start at this nonterminal */
 %start Program
 
@@ -112,29 +111,81 @@ FunctionDeclStmt
         printf("PRINTLN str\n");
     } ';' OPTIONAL_NEWLINE
     | LET ID{strcpy(tempname, $<s_val>2);}  ':' Type '=' DATA ';'
-    | PRINTLN '(' Expr ')' ';' {printf("PRINTLN %s\n",lookup_symbol_type(tempname));}
+    | PRINTLN '(' Expr ')' ';' {printf("PRINTLN %s\n",$<s_val>3);}
 ;
 
-Expr
-    : Expr '+' Term {printf("ADD\n");}
-    | Expr '-' Term {printf("SUB\n");}
-    | Term
-;
+Expr        : LORExpr { $$ = $1; };
 
-Term
-    : Term '*' Factor {printf("MUL\n");}
-    | Term '/' Factor {printf("DIV\n");}
-    | Term '%' Factor {printf("REM\n");}
-    | Factor
-;
+LORExpr     : LORExpr LOR LANDExpr { printf("LOR\n"); $$ = "bool";  }
+            | LANDExpr{ $$ = $1; };
+            | OPTIONAL_NEWLINE
 
+LANDExpr    : LANDExpr LAND EqualityExpr { printf("LAND\n"); $$ = "bool"; }
+            | EqualityExpr{ $$ = $1; };
+            | OPTIONAL_NEWLINE
+EqualityExpr: EqualityExpr EQL RelExpr { printf("EQL\n"); $$ = "bool"; }
+            | EqualityExpr NEQ RelExpr { printf("NEQ\n"); $$ = "bool"; }
+            | RelExpr{ $$ = $1; }
+            | OPTIONAL_NEWLINE
+
+RelExpr     : RelExpr '>' AddExpr { printf("GTR\n"); $$ = "bool"; }
+            | RelExpr '<' AddExpr { printf("LT\n"); $$ = "bool"; }
+            | RelExpr GEQ AddExpr { printf("GEQ\n"); $$ = "bool"; }
+            | RelExpr LEQ AddExpr { printf("LEQ\n"); $$ = "bool"; }
+            | AddExpr{ $$ = $1; }
+            | OPTIONAL_NEWLINE
+
+AddExpr     : AddExpr '+' Term { printf("ADD\n"); 
+                if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                    $$ = "i32";
+                } 
+                else {
+                    $$ = "f32";
+                } 
+            }
+            | AddExpr '-' Term { printf("SUB\n"); 
+                if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                    $$ = "i32";
+                } 
+                else {
+                    $$ = "f32";
+                } 
+            }
+            | Term { $$ = $1; }
+            | OPTIONAL_NEWLINE
+
+Term        : Term '*' Factor { 
+                printf("MUL\n");
+                if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                        $$ = "i32";
+                    } 
+                    else {
+                        $$ = "f32";
+                    } 
+                }
+            | Term '/' Factor {
+                 printf("DIV\n");
+                 if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                        $$ = "i32";
+                    } 
+                    else {
+                        $$ = "f32";
+                    } 
+                }
+            | Term '%' Factor { printf("REM\n"); $$ = "i32";}
+            | Factor { $$ = $1; }
+            | OPTIONAL_NEWLINE
 Factor
-    : '(' Expr ')'
-    | '-' Factor {printf("NEG\n");}
-    | '!' Factor {printf("NOT\n");}
-    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol_addr($<s_val>1));}
-    | INT_LIT {printf("INT_LIT %d\n", $<i_val>1);}
-    | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);}
+    : '(' Expr ')'{
+        $$ = $<s_val>2;
+    }
+    | '-' Factor {printf("NEG\n");$$ = $<s_val>2;}
+    | '!' Factor {printf("NOT\n");$$ = "bool";}
+    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol_addr($<s_val>1));$$ =lookup_symbol_type($<s_val>1);}
+    | INT_LIT {printf("INT_LIT %d\n", $<i_val>1);$$ = "i32";}
+    | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);$$ = "f32";}
+    | TRUE  { printf("bool TRUE \n");    $$ = "bool";}
+    | FALSE { printf("bool FALSE \n");   $$ = "bool";}
 ;
 
 Type
@@ -225,3 +276,4 @@ static void dump_symbol() {
         }
     }
 }
+
