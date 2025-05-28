@@ -35,6 +35,7 @@
     static void insert_symbol();
     static char* lookup_symbol_type(char* name);
     static int lookup_symbol_addr(char* name);
+    static void dump_all_symbol();
     static void dump_symbol();
     /* Global variables */
     bool HAS_ERROR = false;
@@ -44,6 +45,10 @@
     int addr = -1;
     int total_lines = 0;
     char tempname[20];
+    int mut = 0;
+    char exprtype[20];
+    char cvt[3];
+    int print=0;
 %}
 
 %error-verbose
@@ -76,8 +81,16 @@
 %token <s_val> STRING_LIT
 %token <s_val> IDENT
 
+
+%left LOR
+%left LAND
+%left '>' '<' GEQ LEQ EQL NEQ
+%left '+' '-'
+%left '*' '/' '%'
+%right '!'
+
 /* Nonterminal with return, which need to sepcify type */
-%type <s_val> Type Expr LORExpr LANDExpr EqualityExpr RelExpr AddExpr Term Factor
+%type <s_val> Type Expr LORExpr LANDExpr EqualityExpr RelExpr AddExpr Term Factor ASSIGN OPTION_AS
 /* Yacc will start at this nonterminal */
 %start Program
 
@@ -85,7 +98,7 @@
 %%
 
 Program
-    : { create_symbol(); } GlobalStatementList OPTIONAL_NEWLINE { dump_symbol();} 
+    : { create_symbol(); } GlobalStatementList OPTIONAL_NEWLINE { dump_all_symbol();} 
 ;
 
 GlobalStatementList 
@@ -95,6 +108,12 @@ GlobalStatementList
 
 GlobalStatement
     : FunctionDeclStmt 
+    | '{' 
+    {
+        scope_level++;
+        create_symbol();
+    }
+     OPTIONAL_NEWLINE GlobalStatementList '}' { dump_symbol(); }OPTIONAL_NEWLINE
     | OPTIONAL_NEWLINE
 ;
 
@@ -110,11 +129,80 @@ FunctionDeclStmt
         printf("STRING_LIT \"%s\"\n", $<s_val>4);
         printf("PRINTLN str\n");
     } ';' OPTIONAL_NEWLINE
-    | LET ID{strcpy(tempname, $<s_val>2);}  ':' Type '=' DATA ';'
+    | PRINT '(' '\"' STRING_LIT '\"' ')' {
+        printf("STRING_LIT \"%s\"\n", $<s_val>4);
+        printf("PRINT str\n");
+    } ';' OPTIONAL_NEWLINE
+    | LET ID{strcpy(tempname, $<s_val>2);}  ':' Type OPTION_STORE
+    | LET MUT ID{strcpy(tempname, $<s_val>3);mut=1;}  ':' Type OPTION_STORE
     | PRINTLN '(' Expr ')' ';' {printf("PRINTLN %s\n",$<s_val>3);}
+    | PRINT '(' Expr ')' ';' {printf("PRINT %s\n",$<s_val>3);}
+    | ID ASSIGN Expr{if(print){printf("%s\n",cvt);print=0;}strcpy(exprtype, $<s_val>3);} OPTION_AS';'{
+        if(strcmp($<s_val>2, "ASSIGN") == 0){
+            printf("ASSIGN\n");
+        }
+        else if(strcmp($<s_val>2, "ADD_ASSIGN") == 0){
+            printf("ADD_ASSIGN\n");
+        }
+        else if(strcmp($<s_val>2, "SUB_ASSIGN") == 0){
+            printf("SUB_ASSIGN\n");
+        }
+        else if(strcmp($<s_val>2, "MUL_ASSIGN") == 0){
+            printf("MUL_ASSIGN\n");
+        }
+        else if(strcmp($<s_val>2, "DIV_ASSIGN") == 0){
+            printf("DIV_ASSIGN\n");
+        }
+        else if(strcmp($<s_val>2, "REM_ASSIGN") == 0){
+            printf("REM_ASSIGN\n");
+        }
+    } 
 ;
-
+OPTION_STORE
+    : '=' STORE_DATA ';'
+    | ';'
+OPTION_AS
+    : AS { 
+        if(strcmp(exprtype, "i32" ) == 0){
+        cvt[0]='i';
+    }
+    else if(strcmp(exprtype, "f32") == 0){
+        cvt[0]='f';
+    }
+    else if(strcmp(exprtype, "bool") == 0){
+        cvt[0]='b';
+    }
+    else if(strcmp(exprtype, "str") == 0){
+        cvt[0]='s';
+    }
+    print=1;
+    } Type{
+        if(strcmp($<s_val>3, "i32") == 0){
+            cvt[2]='i';
+        }
+        else if(strcmp($<s_val>3, "f32") == 0){
+            cvt[2]='f';
+        }
+        else if(strcmp($<s_val>3, "bool") == 0){
+            cvt[2]='b';
+        }
+        else if(strcmp($<s_val>3, "str") == 0){
+            cvt[2]='s';
+        }
+        $$=cvt;
+    }
+    |
+;
+ASSIGN
+    : '=' {$$ = "ASSIGN";}
+    | ADD_ASSIGN {$$ = "ADD_ASSIGN";}
+    | SUB_ASSIGN {$$ = "SUB_ASSIGN";}
+    | MUL_ASSIGN {$$ = "MUL_ASSIGN";}
+    | DIV_ASSIGN {$$ = "DIV_ASSIGN";}
+    | REM_ASSIGN {$$ = "REM_ASSIGN";}
+;
 Expr        : LORExpr { $$ = $1; };
+            | DATA
 
 LORExpr     : LORExpr LOR LANDExpr { printf("LOR\n"); $$ = "bool";  }
             | LANDExpr{ $$ = $1; };
@@ -184,31 +272,42 @@ Factor
     | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol_addr($<s_val>1));$$ =lookup_symbol_type($<s_val>1);}
     | INT_LIT {printf("INT_LIT %d\n", $<i_val>1);$$ = "i32";}
     | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);$$ = "f32";}
-    | TRUE  { printf("bool TRUE \n");    $$ = "bool";}
-    | FALSE { printf("bool FALSE \n");   $$ = "bool";}
+    | TRUE  { printf("bool TRUE\n");    $$ = "bool";}
+    | FALSE { printf("bool FALSE\n");   $$ = "bool";}
 ;
 
 Type
-    : INT   { $$ = "int"; }
-    | FLOAT { $$ = "float"; }
+    : INT   { $$ = "i32"; }
+    | FLOAT { $$ = "f32"; }
     | BOOL  { $$ = "bool"; }
     | STR   { $$ = "str"; }
+    | '&' STR { $$ = "&str"; }
 ; 
 OPTIONAL_NEWLINE
     : NEWLINE { yylineno++; }
     |
 ;
-DATA
-    : INT_LIT {printf("INT_LIT %d\n", $<i_val>1);insert_symbol(tempname, 0, "i32",  yylineno,"-");}
-    | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);insert_symbol(tempname, 0, "f32",  yylineno,"-");}
-    | STRING_LIT {printf("STRING_LIT %s\n", $<s_val>1);insert_symbol(tempname, 0, "str",  yylineno,"-");}
+STORE_DATA
+    : INT_LIT {printf("INT_LIT %d\n", $<i_val>1);insert_symbol(tempname,mut, "i32",  yylineno,"-");mut=0;}
+    | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);insert_symbol(tempname,mut, "f32",  yylineno,"-");mut=0;}
+    | '"'STRING_LIT '"' {printf("STRING_LIT \"%s\"\n", $<s_val>2);insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
+    | TRUE {printf("bool TRUE\n");insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
+    | FALSE {printf("bool FALSE\n");insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
+    | '"' '"' {printf("STRING_LIT \"%s\"\n","");insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
 ;
-
+DATA
+    : INT_LIT {printf("INT_LIT %d\n", $<i_val>1);}
+    | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);}
+    | '"'STRING_LIT '"' {printf("STRING_LIT \"%s\"\n", $<s_val>2);}
+    | TRUE {printf("bool TRUE\n");}
+    | FALSE {printf("bool FALSE\n");}
+;
 %%
 
 /* C code section */
 int main(int argc, char *argv[])
 {
+    cvt[1]='2';
     if (argc == 2) {
         yyin = fopen(argv[1], "r");
     } else {
@@ -263,7 +362,7 @@ static char* lookup_symbol_type(char* name) {
     return NULL;
 }
 
-static void dump_symbol() {
+static void dump_all_symbol() {
     for (int level = scope_level; level >= 0; level--) {
         printf("\n> Dump symbol table (scope level: %d)\n", level);
         printf("%-10s%-10s%-10s%-10s%-10s%-10s%-10s\n",
@@ -277,3 +376,14 @@ static void dump_symbol() {
     }
 }
 
+static void dump_symbol() {
+    int level = scope_level--;
+    printf("\n> Dump symbol table (scope level: %d)\n", level);
+    printf("%-10s%-10s%-10s%-10s%-10s%-10s%-10s\n",
+        "Index", "Name", "Mut", "Type", "Addr", "Lineno", "Func_sig");
+    for (int i = 0; i < symbol_index[level]; i++) {
+        Symbol_table s = symbol_table[level][i];
+        printf("%-10d%-10s%-10d%-10s%-10d%-10d%-10s\n",
+            s.index, s.name, s.mut, s.type, s.addr, s.lineno, s.func_sig);
+    }
+}
