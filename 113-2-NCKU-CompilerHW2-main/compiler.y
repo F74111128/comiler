@@ -115,8 +115,15 @@ GlobalStatement
      OPTIONAL_NEWLINE GlobalStatementList '}' { dump_symbol(); }OPTIONAL_NEWLINE
     | OPTIONAL_NEWLINE
     | IfStatement
+    | WhileStatement
 ;
 
+WhileStatement
+    : WHILE Expr '{' {
+        scope_level++;
+        create_symbol();
+        }
+        GlobalStatementList '}'{dump_symbol();}
 IfStatement
     : IF  Expr  '{' {
         scope_level++;
@@ -150,6 +157,7 @@ FunctionDeclStmt
     } ';' OPTIONAL_NEWLINE
     | LET ID{strcpy(tempname, $<s_val>2);}  ':' Type OPTION_STORE
     | LET MUT ID{strcpy(tempname, $<s_val>3);mut=1;}  ':' Type{strcpy(type_temp, $<s_val>6);} OPTION_STORE
+    | LET MUT ID{strcpy(tempname, $<s_val>3);mut=1;}  '=' STORE_DATA ';'
     | PRINTLN '(' Expr ')' ';' {printf("PRINTLN %s\n",$<s_val>3);}
     | PRINT '(' Expr ')' ';' {printf("PRINT %s\n",$<s_val>3);}
     | ID ASSIGN Expr ';'{
@@ -201,7 +209,7 @@ EqualityExpr: EqualityExpr EQL RelExpr { printf("EQL\n"); $$ = "bool"; }
             | OPTIONAL_NEWLINE
 
 RelExpr     : RelExpr '>' AddExpr { printf("GTR\n"); $$ = "bool"; }
-            | RelExpr '<' AddExpr { printf("LT\n"); $$ = "bool"; }
+            | RelExpr '<' AddExpr { printf("LSS\n"); $$ = "bool"; }
             | RelExpr GEQ AddExpr { printf("GEQ\n"); $$ = "bool"; }
             | RelExpr LEQ AddExpr { printf("LEQ\n"); $$ = "bool"; }
             | AddExpr{ $$ = $1; }
