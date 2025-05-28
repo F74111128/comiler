@@ -46,9 +46,8 @@
     int total_lines = 0;
     char tempname[20];
     int mut = 0;
-    char exprtype[20];
     char cvt[3];
-    int print=0;
+    char type_temp[20];
 %}
 
 %error-verbose
@@ -90,7 +89,7 @@
 %right '!'
 
 /* Nonterminal with return, which need to sepcify type */
-%type <s_val> Type Expr LORExpr LANDExpr EqualityExpr RelExpr AddExpr Term Factor ASSIGN OPTION_AS
+%type <s_val> Type Expr LORExpr LANDExpr EqualityExpr RelExpr AddExpr Term Factor ASSIGN 
 /* Yacc will start at this nonterminal */
 %start Program
 
@@ -134,10 +133,10 @@ FunctionDeclStmt
         printf("PRINT str\n");
     } ';' OPTIONAL_NEWLINE
     | LET ID{strcpy(tempname, $<s_val>2);}  ':' Type OPTION_STORE
-    | LET MUT ID{strcpy(tempname, $<s_val>3);mut=1;}  ':' Type OPTION_STORE
+    | LET MUT ID{strcpy(tempname, $<s_val>3);mut=1;}  ':' Type{strcpy(type_temp, $<s_val>6);} OPTION_STORE
     | PRINTLN '(' Expr ')' ';' {printf("PRINTLN %s\n",$<s_val>3);}
     | PRINT '(' Expr ')' ';' {printf("PRINT %s\n",$<s_val>3);}
-    | ID ASSIGN Expr{if(print){printf("%s\n",cvt);print=0;}strcpy(exprtype, $<s_val>3);} OPTION_AS';'{
+    | ID ASSIGN Expr ';'{
         if(strcmp($<s_val>2, "ASSIGN") == 0){
             printf("ASSIGN\n");
         }
@@ -160,38 +159,7 @@ FunctionDeclStmt
 ;
 OPTION_STORE
     : '=' STORE_DATA ';'
-    | ';'
-OPTION_AS
-    : AS { 
-        if(strcmp(exprtype, "i32" ) == 0){
-        cvt[0]='i';
-    }
-    else if(strcmp(exprtype, "f32") == 0){
-        cvt[0]='f';
-    }
-    else if(strcmp(exprtype, "bool") == 0){
-        cvt[0]='b';
-    }
-    else if(strcmp(exprtype, "str") == 0){
-        cvt[0]='s';
-    }
-    print=1;
-    } Type{
-        if(strcmp($<s_val>3, "i32") == 0){
-            cvt[2]='i';
-        }
-        else if(strcmp($<s_val>3, "f32") == 0){
-            cvt[2]='f';
-        }
-        else if(strcmp($<s_val>3, "bool") == 0){
-            cvt[2]='b';
-        }
-        else if(strcmp($<s_val>3, "str") == 0){
-            cvt[2]='s';
-        }
-        $$=cvt;
-    }
-    |
+    | STORE_DATA ';'
 ;
 ASSIGN
     : '=' {$$ = "ASSIGN";}
@@ -274,6 +242,35 @@ Factor
     | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);$$ = "f32";}
     | TRUE  { printf("bool TRUE\n");    $$ = "bool";}
     | FALSE { printf("bool FALSE\n");   $$ = "bool";}
+    | Factor AS Type {
+                                    if(strcmp($<s_val>1, "i32" ) == 0){
+                                            cvt[0]='i';
+                                    }
+                                    else if(strcmp($<s_val>1, "f32") == 0){
+                                        cvt[0]='f';
+                                    }
+                                    else if(strcmp($<s_val>1, "bool") == 0){
+                                        cvt[0]='b';
+                                    }
+                                    else if(strcmp($<s_val>1, "str") == 0){
+                                        cvt[0]='s';
+                                    }
+
+                                    if(strcmp($<s_val>3, "i32") == 0){
+                                        cvt[2]='i';
+                                    }
+                                    else if(strcmp($<s_val>3, "f32") == 0){
+                                        cvt[2]='f';
+                                    }
+                                    else if(strcmp($<s_val>3, "bool") == 0){
+                                        cvt[2]='b';
+                                    }
+                                    else if(strcmp($<s_val>3, "str") == 0){
+                                        cvt[2]='s';
+                                    }
+                                    $$=$<s_val>3;
+                                    printf("%s\n",cvt);
+            }
 ;
 
 Type
@@ -294,6 +291,7 @@ STORE_DATA
     | TRUE {printf("bool TRUE\n");insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
     | FALSE {printf("bool FALSE\n");insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
     | '"' '"' {printf("STRING_LIT \"%s\"\n","");insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
+    |  {insert_symbol(tempname,mut, type_temp,  yylineno,"-");mut=0;}
 ;
 DATA
     : INT_LIT {printf("INT_LIT %d\n", $<i_val>1);}
