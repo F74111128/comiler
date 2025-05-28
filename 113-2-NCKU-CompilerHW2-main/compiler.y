@@ -201,11 +201,11 @@ ASSIGN
     | DIV_ASSIGN {$$ = "DIV_ASSIGN";}
     | REM_ASSIGN {$$ = "REM_ASSIGN";}
 ;
-Expr        : LORExpr { $$ = $1; };
+Expr        : LORExpr { $$ = $1; }
             | DATA
 
 LORExpr     : LORExpr LOR LANDExpr { printf("LOR\n"); $$ = "bool";  }
-            | LANDExpr{ $$ = $1; };
+            | LANDExpr{ $$ = $1; }
             | OPTIONAL_NEWLINE
 
 LANDExpr    : LANDExpr LAND EqualityExpr { printf("LAND\n"); $$ = "bool"; }
