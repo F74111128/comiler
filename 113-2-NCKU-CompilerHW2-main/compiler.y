@@ -265,6 +265,7 @@ Factor
     | INT_LIT {printf("INT_LIT %d\n", $<i_val>1);$$ = "i32";}
     | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);$$ = "f32";}
     | TRUE  { printf("bool TRUE\n");    $$ = "bool";}
+    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol_addr($<s_val>1));}'[' INT_LIT  ']'{printf("INT_LIT %d\n", $<i_val>4);$$ = "array";} 
     | FALSE { printf("bool FALSE\n");   $$ = "bool";}
     | Factor AS Type {
                                     if(strcmp($<s_val>1, "i32" ) == 0){
@@ -317,7 +318,7 @@ STORE_DATA
     | FALSE {printf("bool FALSE\n");insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
     | '"' '"' {printf("STRING_LIT \"%s\"\n","");insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
     |  {insert_symbol(tempname,mut, type_temp,  yylineno,"-");mut=0;}
-    | '[' INT_LIT {printf("INT_LIT %d\n", $<i_val>2);}  OPTION_ELEMENT {insert_symbol(tempname,mut, "array",  yylineno,"-");mut=0;} ';'
+    | '[' INT_LIT {printf("INT_LIT %d\n", $<i_val>2);}  OPTION_ELEMENT {insert_symbol(tempname,mut, "array",  yylineno,"-");mut=0;} 
 ;
 OPTION_ELEMENT
     : ',' INT_LIT{printf("INT_LIT %d\n", $<i_val>2);} OPTION_ELEMENT
