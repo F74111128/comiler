@@ -34,9 +34,9 @@
     static void create_symbol();
     static void insert_symbol();
     static char* lookup_symbol_type(char* name);
-    static int lookup_symbol_addr(char* name);
     static void dump_all_symbol();
     static void dump_symbol();
+    static int lookup_symbol(char* name, const char* field);
     /* Global variables */
     bool HAS_ERROR = false;
     int scope_level = 0;
@@ -161,23 +161,44 @@ FunctionDeclStmt
     | PRINTLN '(' Expr ')' ';' {printf("PRINTLN %s\n",$<s_val>3);}
     | PRINT '(' Expr ')' ';' {printf("PRINT %s\n",$<s_val>3);}
     | ID ASSIGN Expr ';'{
+        if(lookup_symbol($<s_val>1, "exist") == 0){
+            printf("error:%d: undefined: %s\n", yylineno+1, $<s_val>1);
+        }
         if(strcmp($<s_val>2, "ASSIGN") == 0){
             printf("ASSIGN\n");
+            if(lookup_symbol($<s_val>1, "mut") == 0){
+                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            }
         }
         else if(strcmp($<s_val>2, "ADD_ASSIGN") == 0){
             printf("ADD_ASSIGN\n");
+            if(lookup_symbol($<s_val>1, "mut") == 0){
+                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            }
         }
         else if(strcmp($<s_val>2, "SUB_ASSIGN") == 0){
             printf("SUB_ASSIGN\n");
+            if(lookup_symbol($<s_val>1, "mut") == 0){
+                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            }
         }
         else if(strcmp($<s_val>2, "MUL_ASSIGN") == 0){
             printf("MUL_ASSIGN\n");
+            if(lookup_symbol($<s_val>1, "mut") == 0){
+                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            }
         }
         else if(strcmp($<s_val>2, "DIV_ASSIGN") == 0){
             printf("DIV_ASSIGN\n");
+            if(lookup_symbol($<s_val>1, "mut") == 0){
+                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            }
         }
         else if(strcmp($<s_val>2, "REM_ASSIGN") == 0){
             printf("REM_ASSIGN\n");
+            if(lookup_symbol($<s_val>1, "mut") == 0){
+                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            }
         }
     } 
 ;
@@ -261,11 +282,11 @@ Factor
     }
     | '-' Factor {printf("NEG\n");$$ = $<s_val>2;}
     | '!' Factor {printf("NOT\n");$$ = "bool";}
-    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol_addr($<s_val>1));$$ =lookup_symbol_type($<s_val>1);}
+    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));$$ =lookup_symbol_type($<s_val>1);}
     | INT_LIT {printf("INT_LIT %d\n", $<i_val>1);$$ = "i32";}
     | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);$$ = "f32";}
     | TRUE  { printf("bool TRUE\n");    $$ = "bool";}
-    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol_addr($<s_val>1));}'[' INT_LIT  ']'{printf("INT_LIT %d\n", $<i_val>4);$$ = "array";} 
+    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));}'[' INT_LIT  ']'{printf("INT_LIT %d\n", $<i_val>4);$$ = "array";} 
     | FALSE { printf("bool FALSE\n");   $$ = "bool";}
     | Factor AS Type {
                                     if(strcmp($<s_val>1, "i32" ) == 0){
@@ -369,15 +390,29 @@ static void insert_symbol(char* name, int mut, char* type, int lineno, char* fun
     symbol_index[scope_level]++;
 }
 
-static  int lookup_symbol_addr(char* name) {
+static int lookup_symbol(char* name, const char* field) {
+    int find=0;
     for (int level = scope_level; level >= 0; level--) {
         for (int i = 0; i < symbol_index[level]; i++) {
             if (strcmp(symbol_table[level][i].name, name) == 0) {
+                find=1;
+                if (strcmp(field, "mut") == 0) {
+                    return symbol_table[level][i].mut;
+                } else if (strcmp(field, "addr") == 0) {
                     return symbol_table[level][i].addr;
+                }
             }
         }
     }
-    return -1;
+    if(strcmp(field, "exist") == 0){
+        if(find==1){
+            return 1;
+        }
+        else{
+            return 0;
+        }
+    }
+    return -1; 
 }
 
 static char* lookup_symbol_type(char* name) {
