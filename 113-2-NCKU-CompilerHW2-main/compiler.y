@@ -303,6 +303,7 @@ Type
     | BOOL  { $$ = "bool"; }
     | STR   { $$ = "str"; }
     | '&' STR { $$ = "&str"; }
+    | '[' INT ';' INT_LIT {printf("INT_LIT %d\n", $<i_val>4);} ']' { $$ = "array"; }
 ; 
 OPTIONAL_NEWLINE
     : NEWLINE { yylineno++; }
@@ -316,6 +317,11 @@ STORE_DATA
     | FALSE {printf("bool FALSE\n");insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
     | '"' '"' {printf("STRING_LIT \"%s\"\n","");insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
     |  {insert_symbol(tempname,mut, type_temp,  yylineno,"-");mut=0;}
+    | '[' INT_LIT {printf("INT_LIT %d\n", $<i_val>2);}  OPTION_ELEMENT {insert_symbol(tempname,mut, "array",  yylineno,"-");mut=0;} ';'
+;
+OPTION_ELEMENT
+    : ',' INT_LIT{printf("INT_LIT %d\n", $<i_val>2);} OPTION_ELEMENT
+    | ']'
 ;
 DATA
     : INT_LIT {printf("INT_LIT %d\n", $<i_val>1);}
