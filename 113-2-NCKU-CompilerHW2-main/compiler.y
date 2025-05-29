@@ -48,8 +48,7 @@
     int mut = 0;
     char cvt[3];
     char type_temp[20];
-    int error=0,undefinenum=0;
-    char* undefine[20];
+    int error=0,undefine=0;
 %}
 
 %error-verbose
@@ -166,11 +165,10 @@ FunctionDeclStmt
     | ID ASSIGN Expr ';'{
         if(lookup_symbol($<s_val>1, "exist") == 0){
             error=1;
-            undefinenum++;
-            undefine[undefinenum-1]= $<s_val>1;
+            undefine=1;
             printf("error:%d: undefined: %s\n", yylineno+1, $<s_val>1);
         }
-        if(!error){
+        if(!error||!undefine){
             if(strcmp($<s_val>2, "ASSIGN") == 0){
                 printf("ASSIGN\n");
                 if(lookup_symbol($<s_val>1, "mut") == 0){
@@ -270,13 +268,23 @@ EqualityExpr: EqualityExpr EQL RelExpr {
             | OPTIONAL_NEWLINE
 
 RelExpr     : RelExpr '>' AddExpr { 
-                printf("GTR\n"); 
-                if(error){
-                    $$="error";
+                if(strcmp($<s_val>1,"undefined") == 0){
+                    if(strcmp($<s_val>3,"undefined") == 0){
+                        printf("error:%d: invalid operation: GTR (mismatched types undefined and undefined)\n", yylineno+1);
+                    }
+                    else{
+                        printf("error:%d: invalid operation: GTR (mismatched types undefined and %s)\n", yylineno+1, $<s_val>3);
+                    }
+                    $$="undefined";
+                }
+                else if (strcmp($<s_val>3,"undefined") == 0){
+                    printf("error:%d: invalid operation: GTR (mismatched types %s and undefined)\n", yylineno+1, $<s_val>1);
+                    $$="undefined";
                 }
                 else{
                     $$ = "bool"; 
                 }
+                printf("GTR\n"); 
             }
             | RelExpr '<' AddExpr {
                 printf("LSS\n"); 
@@ -392,11 +400,22 @@ Factor
         }
     | '-' Factor {printf("NEG\n");$$ = $<s_val>2;}
     | '!' Factor {printf("NOT\n");$$ = "bool";}
-    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));$$ =lookup_symbol_type($<s_val>1);}
+    | ID {
+        strcpy(tempname, $<s_val>1);
+    if(lookup_symbol($<s_val>1, "exist") == 0){
+        printf("error:%d: undefined: %s\n", yylineno+1, $<s_val>1);
+        $$="undefined";
+    }
+    else{
+        printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));$$ =lookup_symbol_type($<s_val>1);
+    }
+}
     | INT_LIT {printf("INT_LIT %d\n", $<i_val>1);$$ = "i32";}
     | FLOAT_LIT {printf("FLOAT_LIT %f\n", $<f_val>1);$$ = "f32";}
     | TRUE  { printf("bool TRUE\n");    $$ = "bool";}
-    | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));}'[' INT_LIT  ']'{printf("INT_LIT %d\n", $<i_val>4);$$ = "array";} 
+    | ID {strcpy(tempname, $<s_val>1);
+        printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));
+    }'[' INT_LIT  ']'{printf("INT_LIT %d\n", $<i_val>4);$$ = "array";} 
     | FALSE { printf("bool FALSE\n");   $$ = "bool";}
     | Factor AS Type {
                                     if(strcmp($<s_val>1, "i32" ) == 0){
