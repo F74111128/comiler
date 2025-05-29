@@ -48,6 +48,8 @@
     int mut = 0;
     char cvt[3];
     char type_temp[20];
+    int error=0,undefinenum=0;
+    char* undefine[20];
 %}
 
 %error-verbose
@@ -83,6 +85,7 @@
 
 %left LOR
 %left LAND
+%left LSHIFT RSHIFT
 %left '>' '<' GEQ LEQ EQL NEQ
 %left '+' '-'
 %left '*' '/' '%'
@@ -102,11 +105,11 @@ Program
 
 GlobalStatementList 
     : GlobalStatementList GlobalStatement
-    | GlobalStatement
+    | GlobalStatement 
 ;
 
 GlobalStatement
-    : FunctionDeclStmt 
+    : FunctionDeclStmt{error=0;}
     | '{' 
     {
         scope_level++;
@@ -162,42 +165,47 @@ FunctionDeclStmt
     | PRINT '(' Expr ')' ';' {printf("PRINT %s\n",$<s_val>3);}
     | ID ASSIGN Expr ';'{
         if(lookup_symbol($<s_val>1, "exist") == 0){
+            error=1;
+            undefinenum++;
+            undefine[undefinenum-1]= $<s_val>1;
             printf("error:%d: undefined: %s\n", yylineno+1, $<s_val>1);
         }
-        if(strcmp($<s_val>2, "ASSIGN") == 0){
-            printf("ASSIGN\n");
-            if(lookup_symbol($<s_val>1, "mut") == 0){
-                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+        if(!error){
+            if(strcmp($<s_val>2, "ASSIGN") == 0){
+                printf("ASSIGN\n");
+                if(lookup_symbol($<s_val>1, "mut") == 0){
+                    printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+                }
             }
-        }
-        else if(strcmp($<s_val>2, "ADD_ASSIGN") == 0){
-            printf("ADD_ASSIGN\n");
-            if(lookup_symbol($<s_val>1, "mut") == 0){
-                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            else if(strcmp($<s_val>2, "ADD_ASSIGN") == 0){
+                printf("ADD_ASSIGN\n");
+                if(lookup_symbol($<s_val>1, "mut") == 0){
+                    printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+                }
             }
-        }
-        else if(strcmp($<s_val>2, "SUB_ASSIGN") == 0){
-            printf("SUB_ASSIGN\n");
-            if(lookup_symbol($<s_val>1, "mut") == 0){
-                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            else if(strcmp($<s_val>2, "SUB_ASSIGN") == 0){
+                printf("SUB_ASSIGN\n");
+                if(lookup_symbol($<s_val>1, "mut") == 0){
+                    printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+                }
             }
-        }
-        else if(strcmp($<s_val>2, "MUL_ASSIGN") == 0){
-            printf("MUL_ASSIGN\n");
-            if(lookup_symbol($<s_val>1, "mut") == 0){
-                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            else if(strcmp($<s_val>2, "MUL_ASSIGN") == 0){
+                printf("MUL_ASSIGN\n");
+                if(lookup_symbol($<s_val>1, "mut") == 0){
+                    printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+                }
             }
-        }
-        else if(strcmp($<s_val>2, "DIV_ASSIGN") == 0){
-            printf("DIV_ASSIGN\n");
-            if(lookup_symbol($<s_val>1, "mut") == 0){
-                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            else if(strcmp($<s_val>2, "DIV_ASSIGN") == 0){
+                printf("DIV_ASSIGN\n");
+                if(lookup_symbol($<s_val>1, "mut") == 0){
+                    printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+                }
             }
-        }
-        else if(strcmp($<s_val>2, "REM_ASSIGN") == 0){
-            printf("REM_ASSIGN\n");
-            if(lookup_symbol($<s_val>1, "mut") == 0){
-                printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+            else if(strcmp($<s_val>2, "REM_ASSIGN") == 0){
+                printf("REM_ASSIGN\n");
+                if(lookup_symbol($<s_val>1, "mut") == 0){
+                    printf("error:%d: cannot borrow immutable borrowed content `%s` as mutable\n", yylineno+1, $<s_val>1);
+                }
             }
         }
     } 
@@ -214,30 +222,95 @@ ASSIGN
     | DIV_ASSIGN {$$ = "DIV_ASSIGN";}
     | REM_ASSIGN {$$ = "REM_ASSIGN";}
 ;
-Expr        : LORExpr { $$ = $1; }
+Expr        : LORExpr { $$ = $1;}
             | DATA
 
-LORExpr     : LORExpr LOR LANDExpr { printf("LOR\n"); $$ = "bool";  }
+LORExpr     : LORExpr LOR LANDExpr { 
+                printf("LOR\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool";  }
+            }
             | LANDExpr{ $$ = $1; }
             | OPTIONAL_NEWLINE
 
-LANDExpr    : LANDExpr LAND EqualityExpr { printf("LAND\n"); $$ = "bool"; }
+LANDExpr    : LANDExpr LAND EqualityExpr { 
+                printf("LAND\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
             | EqualityExpr{ $$ = $1; };
             | OPTIONAL_NEWLINE
-EqualityExpr: EqualityExpr EQL RelExpr { printf("EQL\n"); $$ = "bool"; }
-            | EqualityExpr NEQ RelExpr { printf("NEQ\n"); $$ = "bool"; }
-            | RelExpr{ $$ = $1; }
+EqualityExpr: EqualityExpr EQL RelExpr { 
+
+                printf("EQL\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
+            | EqualityExpr NEQ RelExpr { 
+                printf("NEQ\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
+            | RelExpr{ $$ = $1;}
             | OPTIONAL_NEWLINE
 
-RelExpr     : RelExpr '>' AddExpr { printf("GTR\n"); $$ = "bool"; }
-            | RelExpr '<' AddExpr { printf("LSS\n"); $$ = "bool"; }
-            | RelExpr GEQ AddExpr { printf("GEQ\n"); $$ = "bool"; }
-            | RelExpr LEQ AddExpr { printf("LEQ\n"); $$ = "bool"; }
+RelExpr     : RelExpr '>' AddExpr { 
+                printf("GTR\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
+            | RelExpr '<' AddExpr {
+                printf("LSS\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
+            | RelExpr GEQ AddExpr { printf("GEQ\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
+            | RelExpr LEQ AddExpr { printf("LEQ\n"); 
+                if(error){
+                    $$="error";
+                }
+                else{
+                    $$ = "bool"; 
+                }
+            }
             | AddExpr{ $$ = $1; }
             | OPTIONAL_NEWLINE
 
 AddExpr     : AddExpr '+' Term { printf("ADD\n"); 
-                if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                if(error){
+                    $$="error";
+                }
+                else if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
                     $$ = "i32";
                 } 
                 else {
@@ -245,6 +318,7 @@ AddExpr     : AddExpr '+' Term { printf("ADD\n");
                 } 
             }
             | AddExpr '-' Term { printf("SUB\n"); 
+                
                 if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
                     $$ = "i32";
                 } 
@@ -257,29 +331,65 @@ AddExpr     : AddExpr '+' Term { printf("ADD\n");
 
 Term        : Term '*' Factor { 
                 printf("MUL\n");
-                if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                if(error){
+                    $$="error";
+                }
+                else if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
                         $$ = "i32";
                     } 
-                    else {
-                        $$ = "f32";
-                    } 
+                else {
+                    $$ = "f32";
+                } 
                 }
             | Term '/' Factor {
                  printf("DIV\n");
-                 if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
+                 if(error){
+                    $$="error";
+                }
+                 else if (strcmp($1, "i32") == 0 && strcmp($3, "i32") == 0) {
                         $$ = "i32";
                     } 
                     else {
                         $$ = "f32";
                     } 
                 }
-            | Term '%' Factor { printf("REM\n"); $$ = "i32";}
+            | Term '%' Factor { printf("REM\n"); if(error){$$="error";}else{$$ = "i32";}}
             | Factor { $$ = $1; }
             | OPTIONAL_NEWLINE
 Factor
     : '(' Expr ')'{
         $$ = $<s_val>2;
     }
+    | Factor LSHIFT Factor {
+        if(strcmp($1,"i32")==0&&strcmp($3,"i32")==0){
+            $$="i32";
+        }
+        else{
+            $$="error";
+            if(strcmp($1,"i32")==0){
+                printf("error:%d: invalid operation: LSHIFT (mismatched types i32 and %s)\n", yylineno+1, $3);
+            }
+            else if(strcmp($3,"i32")==0){
+                printf("error:%d: invalid operation: LSHIFT (mismatched types %s and i32)\n", yylineno+1, $1);
+            }
+        }
+        printf("LSHIFT\n"); 
+    }
+    | Factor RSHIFT Factor { 
+        if(strcmp($1,"i32")==0&&strcmp($3,"i32")==0){
+            $$="i32";
+        }
+        else{
+            $$="error";
+            if(strcmp($1,"i32")==0){
+                printf("error:%d: invalid operation: RSHIFT (mismatched types i32 and %s)\n", yylineno+1, $3);
+            }
+            else if(strcmp($3,"i32")==0){
+                printf("error:%d: invalid operation: RSHIFT (mismatched types %s and i32)\n", yylineno+1, $1);
+            }
+        }
+        printf("RSHIFT\n"); 
+        }
     | '-' Factor {printf("NEG\n");$$ = $<s_val>2;}
     | '!' Factor {printf("NOT\n");$$ = "bool";}
     | ID {strcpy(tempname, $<s_val>1);printf("IDENT (name=%s, address=%d)\n", $<s_val>1,lookup_symbol($<s_val>1,"addr"));$$ =lookup_symbol_type($<s_val>1);}
