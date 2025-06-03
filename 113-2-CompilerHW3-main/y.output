@@ -1,0 +1,2869 @@
+Terminals unused in grammar
+
+    FOR
+    LOOP
+    RETURN
+    BREAK
+    ARROW
+    IN
+    DOTDOT
+    IDENT
+
+
+Rules useless in parser due to conflicts
+
+   15 IfStatement: OPTIONAL_NEWLINE
+
+   91 DATA: INT_LIT
+   92     | FLOAT_LIT
+   94     | TRUE
+   95     | FALSE
+
+
+State 0 conflicts: 9 shift/reduce
+State 3 conflicts: 1 shift/reduce
+State 4 conflicts: 1 shift/reduce
+State 9 conflicts: 1 shift/reduce
+State 11 conflicts: 9 shift/reduce
+State 14 conflicts: 1 shift/reduce
+State 16 conflicts: 12 reduce/reduce
+State 19 conflicts: 3 reduce/reduce
+State 20 conflicts: 3 reduce/reduce
+State 22 conflicts: 3 reduce/reduce
+State 23 conflicts: 3 reduce/reduce
+State 26 conflicts: 1 shift/reduce
+State 36 conflicts: 40 reduce/reduce
+State 39 conflicts: 1 shift/reduce
+State 48 conflicts: 1 shift/reduce
+State 49 conflicts: 9 shift/reduce
+State 52 conflicts: 12 reduce/reduce
+State 61 conflicts: 1 shift/reduce
+State 62 conflicts: 1 shift/reduce
+State 66 conflicts: 1 shift/reduce
+State 67 conflicts: 1 shift/reduce
+State 68 conflicts: 1 shift/reduce
+State 69 conflicts: 1 shift/reduce
+State 70 conflicts: 1 shift/reduce
+State 71 conflicts: 1 shift/reduce
+State 72 conflicts: 1 shift/reduce
+State 73 conflicts: 1 shift/reduce
+State 74 conflicts: 1 shift/reduce
+State 75 conflicts: 1 shift/reduce
+State 84 conflicts: 1 shift/reduce
+State 87 conflicts: 10 shift/reduce
+State 108 conflicts: 9 shift/reduce
+State 110 conflicts: 36 reduce/reduce
+State 112 conflicts: 31 reduce/reduce
+State 114 conflicts: 24 reduce/reduce
+State 117 conflicts: 13 reduce/reduce
+State 128 conflicts: 1 shift/reduce
+State 129 conflicts: 1 shift/reduce
+State 130 conflicts: 9 shift/reduce
+State 135 conflicts: 1 shift/reduce
+State 136 conflicts: 9 shift/reduce
+State 146 conflicts: 10 shift/reduce
+State 147 conflicts: 10 shift/reduce
+State 150 conflicts: 1 shift/reduce
+State 152 conflicts: 10 shift/reduce
+State 153 conflicts: 12 reduce/reduce
+State 161 conflicts: 9 shift/reduce
+State 168 conflicts: 10 shift/reduce
+
+
+Grammar
+
+    0 $accept: Program $end
+
+    1 Program: GlobalStatementList OPTIONAL_NEWLINE
+
+    2 GlobalStatementList: GlobalStatementList GlobalStatement
+    3                    | GlobalStatement
+
+    4 GlobalStatement: FunctionDeclStmt
+    5                | '{' OPTIONAL_NEWLINE GlobalStatementList '}' OPTIONAL_NEWLINE
+    6                | OPTIONAL_NEWLINE
+    7                | IfStatement
+    8                | WhileStatement
+
+    9 $@1: ε
+
+   10 WhileStatement: WHILE Expr '{' $@1 GlobalStatementList '}'
+
+   11 $@2: ε
+
+   12 IfStatement: IF Expr '{' $@2 GlobalStatementList '}'
+
+   13 $@3: ε
+
+   14 IfStatement: IfStatement ELSE '{' $@3 GlobalStatementList '}'
+   15            | OPTIONAL_NEWLINE
+
+   16 FunctionDeclStmt: FUNC ID '(' ')' '{' OPTIONAL_NEWLINE GlobalStatementList '}'
+   17                 | LET ID ':' Type OPTION_STORE
+   18                 | LET MUT ID OPTION_STORE
+   19                 | LET MUT ID '=' STORE_DATA ';'
+
+   20 $@4: ε
+
+   21 FunctionDeclStmt: PRINTLN $@4 '(' Expr ')' ';'
+   22                 | PRINT '(' Expr ')' ';'
+   23                 | ID ASSIGN Expr ';'
+
+   24 OPTION_STORE: '=' STORE_DATA ';'
+   25             | STORE_DATA ';'
+
+   26 ASSIGN: '='
+   27       | ADD_ASSIGN
+   28       | SUB_ASSIGN
+   29       | MUL_ASSIGN
+   30       | DIV_ASSIGN
+   31       | REM_ASSIGN
+
+   32 Expr: LORExpr
+   33     | DATA
+
+   34 LORExpr: LORExpr LOR LANDExpr
+   35        | LANDExpr
+   36        | OPTIONAL_NEWLINE
+
+   37 LANDExpr: LANDExpr LAND EqualityExpr
+   38         | EqualityExpr
+   39         | OPTIONAL_NEWLINE
+
+   40 EqualityExpr: EqualityExpr EQL RelExpr
+   41             | EqualityExpr NEQ RelExpr
+   42             | RelExpr
+   43             | OPTIONAL_NEWLINE
+
+   44 RelExpr: RelExpr '>' AddExpr
+   45        | RelExpr '<' AddExpr
+   46        | RelExpr GEQ AddExpr
+   47        | RelExpr LEQ AddExpr
+   48        | AddExpr
+   49        | OPTIONAL_NEWLINE
+
+   50 AddExpr: AddExpr '+' Term
+   51        | AddExpr '-' Term
+   52        | Term
+   53        | OPTIONAL_NEWLINE
+
+   54 Term: Term '*' Factor
+   55     | Term '/' Factor
+   56     | Term '%' Factor
+   57     | Factor
+   58     | OPTIONAL_NEWLINE
+
+   59 Factor: '(' Expr ')'
+   60       | Factor LSHIFT Factor
+   61       | Factor RSHIFT Factor
+   62       | '-' Factor
+   63       | '!' Factor
+   64       | ID
+   65       | INT_LIT
+   66       | FLOAT_LIT
+   67       | TRUE
+   68       | FALSE
+   69       | ID '[' INT_LIT ']'
+   70       | Factor AS Type
+
+   71 Type: INT
+   72     | FLOAT
+   73     | BOOL
+   74     | STR
+   75     | '&' STR
+
+   76 $@5: ε
+
+   77 Type: '[' INT ';' INT_LIT $@5 ']'
+
+   78 OPTIONAL_NEWLINE: NEWLINE
+   79                 | ε
+
+   80 STORE_DATA: INT_LIT
+   81           | FLOAT_LIT
+   82           | '"' STRING_LIT '"'
+   83           | TRUE
+   84           | FALSE
+   85           | ε
+
+   86 $@6: ε
+
+   87 STORE_DATA: '[' INT_LIT $@6 OPTION_ELEMENT
+
+   88 $@7: ε
+
+   89 OPTION_ELEMENT: ',' INT_LIT $@7 OPTION_ELEMENT
+   90               | ']'
+
+   91 DATA: INT_LIT
+   92     | FLOAT_LIT
+   93     | '"' STRING_LIT '"'
+   94     | TRUE
+   95     | FALSE
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    '!' (33) 63
+    '"' (34) 82 93
+    '%' (37) 56
+    '&' (38) 75
+    '(' (40) 16 21 22 59
+    ')' (41) 16 21 22 59
+    '*' (42) 54
+    '+' (43) 50
+    ',' (44) 89
+    '-' (45) 51 62
+    '/' (47) 55
+    ':' (58) 17
+    ';' (59) 19 21 22 23 24 25 77
+    '<' (60) 45
+    '=' (61) 19 24 26
+    '>' (62) 44
+    '[' (91) 69 77 87
+    ']' (93) 69 77 90
+    '{' (123) 5 10 12 14 16
+    '}' (125) 5 10 12 14 16
+    error (256)
+    LET (258) 17 18 19
+    MUT (259) 18 19
+    NEWLINE (260) 78
+    INT (261) 71 77
+    FLOAT (262) 72
+    BOOL (263) 73
+    STR (264) 74 75
+    TRUE (265) 67 83 94
+    FALSE (266) 68 84 95
+    GEQ (267) 46
+    LEQ (268) 47
+    EQL (269) 40
+    NEQ (270) 41
+    LOR (271) 34
+    LAND (272) 37
+    ADD_ASSIGN (273) 27
+    SUB_ASSIGN (274) 28
+    MUL_ASSIGN (275) 29
+    DIV_ASSIGN (276) 30
+    REM_ASSIGN (277) 31
+    IF (278) 12
+    ELSE (279) 14
+    FOR (280)
+    WHILE (281) 10
+    LOOP (282)
+    PRINT (283) 22
+    PRINTLN (284) 21
+    FUNC (285) 16
+    RETURN (286)
+    BREAK (287)
+    ID (288) 16 17 18 19 23 64 69
+    ARROW (289)
+    AS (290) 70
+    IN (291)
+    DOTDOT (292)
+    RSHIFT (293) 61
+    LSHIFT (294) 60
+    INT_LIT <i_val> (295) 65 69 77 80 87 89 91
+    FLOAT_LIT <f_val> (296) 66 81 92
+    STRING_LIT <s_val> (297) 82 93
+    IDENT <s_val> (298)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (64)
+        on left: 0
+    Program (65)
+        on left: 1
+        on right: 0
+    GlobalStatementList (66)
+        on left: 2 3
+        on right: 1 2 5 10 12 14 16
+    GlobalStatement (67)
+        on left: 4 5 6 7 8
+        on right: 2 3
+    WhileStatement (68)
+        on left: 10
+        on right: 8
+    $@1 (69)
+        on left: 9
+        on right: 10
+    IfStatement (70)
+        on left: 12 14 15
+        on right: 7 14
+    $@2 (71)
+        on left: 11
+        on right: 12
+    $@3 (72)
+        on left: 13
+        on right: 14
+    FunctionDeclStmt (73)
+        on left: 16 17 18 19 21 22 23
+        on right: 4
+    $@4 (74)
+        on left: 20
+        on right: 21
+    OPTION_STORE (75)
+        on left: 24 25
+        on right: 17 18
+    ASSIGN <s_val> (76)
+        on left: 26 27 28 29 30 31
+        on right: 23
+    Expr <s_val> (77)
+        on left: 32 33
+        on right: 10 12 21 22 23 59
+    LORExpr <s_val> (78)
+        on left: 34 35 36
+        on right: 32 34
+    LANDExpr <s_val> (79)
+        on left: 37 38 39
+        on right: 34 35 37
+    EqualityExpr <s_val> (80)
+        on left: 40 41 42 43
+        on right: 37 38 40 41
+    RelExpr <s_val> (81)
+        on left: 44 45 46 47 48 49
+        on right: 40 41 42 44 45 46 47
+    AddExpr <s_val> (82)
+        on left: 50 51 52 53
+        on right: 44 45 46 47 48 50 51
+    Term <s_val> (83)
+        on left: 54 55 56 57 58
+        on right: 50 51 52 54 55 56
+    Factor <s_val> (84)
+        on left: 59 60 61 62 63 64 65 66 67 68 69 70
+        on right: 54 55 56 57 60 61 62 63 70
+    Type <s_val> (85)
+        on left: 71 72 73 74 75 77
+        on right: 17 70
+    $@5 (86)
+        on left: 76
+        on right: 77
+    OPTIONAL_NEWLINE (87)
+        on left: 78 79
+        on right: 1 5 6 15 16 36 39 43 49 53 58
+    STORE_DATA (88)
+        on left: 80 81 82 83 84 85 87
+        on right: 19 24 25
+    $@6 (89)
+        on left: 86
+        on right: 87
+    OPTION_ELEMENT (90)
+        on left: 89 90
+        on right: 87 89
+    $@7 (91)
+        on left: 88
+        on right: 89
+    DATA <s_val> (92)
+        on left: 91 92 93 94 95
+        on right: 33
+
+
+State 0
+
+    0 $accept: • Program $end
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Program              go to state 10
+    GlobalStatementList  go to state 11
+    GlobalStatement      go to state 12
+    WhileStatement       go to state 13
+    IfStatement          go to state 14
+    FunctionDeclStmt     go to state 15
+    OPTIONAL_NEWLINE     go to state 16
+
+
+State 1
+
+   17 FunctionDeclStmt: LET • ID ':' Type OPTION_STORE
+   18                 | LET • MUT ID OPTION_STORE
+   19                 | LET • MUT ID '=' STORE_DATA ';'
+
+    MUT  shift, and go to state 17
+    ID   shift, and go to state 18
+
+
+State 2
+
+   78 OPTIONAL_NEWLINE: NEWLINE •
+
+    $default  reduce using rule 78 (OPTIONAL_NEWLINE)
+
+
+State 3
+
+   12 IfStatement: IF • Expr '{' $@2 GlobalStatementList '}'
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 19
+    FALSE      shift, and go to state 20
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 22
+    FLOAT_LIT  shift, and go to state 23
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+    '"'        shift, and go to state 27
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Expr              go to state 28
+    LORExpr           go to state 29
+    LANDExpr          go to state 30
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 36
+    DATA              go to state 37
+
+
+State 4
+
+   10 WhileStatement: WHILE • Expr '{' $@1 GlobalStatementList '}'
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 19
+    FALSE      shift, and go to state 20
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 22
+    FLOAT_LIT  shift, and go to state 23
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+    '"'        shift, and go to state 27
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Expr              go to state 38
+    LORExpr           go to state 29
+    LANDExpr          go to state 30
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 36
+    DATA              go to state 37
+
+
+State 5
+
+   22 FunctionDeclStmt: PRINT • '(' Expr ')' ';'
+
+    '('  shift, and go to state 39
+
+
+State 6
+
+   21 FunctionDeclStmt: PRINTLN • $@4 '(' Expr ')' ';'
+
+    $default  reduce using rule 20 ($@4)
+
+    $@4  go to state 40
+
+
+State 7
+
+   16 FunctionDeclStmt: FUNC • ID '(' ')' '{' OPTIONAL_NEWLINE GlobalStatementList '}'
+
+    ID  shift, and go to state 41
+
+
+State 8
+
+   23 FunctionDeclStmt: ID • ASSIGN Expr ';'
+
+    ADD_ASSIGN  shift, and go to state 42
+    SUB_ASSIGN  shift, and go to state 43
+    MUL_ASSIGN  shift, and go to state 44
+    DIV_ASSIGN  shift, and go to state 45
+    REM_ASSIGN  shift, and go to state 46
+    '='         shift, and go to state 47
+
+    ASSIGN  go to state 48
+
+
+State 9
+
+    5 GlobalStatement: '{' • OPTIONAL_NEWLINE GlobalStatementList '}' OPTIONAL_NEWLINE
+
+    NEWLINE  shift, and go to state 2
+
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    OPTIONAL_NEWLINE  go to state 49
+
+
+State 10
+
+    0 $accept: Program • $end
+
+    $end  shift, and go to state 50
+
+
+State 11
+
+    1 Program: GlobalStatementList • OPTIONAL_NEWLINE
+    2 GlobalStatementList: GlobalStatementList • GlobalStatement
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatement   go to state 51
+    WhileStatement    go to state 13
+    IfStatement       go to state 14
+    FunctionDeclStmt  go to state 15
+    OPTIONAL_NEWLINE  go to state 52
+
+
+State 12
+
+    3 GlobalStatementList: GlobalStatement •
+
+    $default  reduce using rule 3 (GlobalStatementList)
+
+
+State 13
+
+    8 GlobalStatement: WhileStatement •
+
+    $default  reduce using rule 8 (GlobalStatement)
+
+
+State 14
+
+    7 GlobalStatement: IfStatement •
+   14 IfStatement: IfStatement • ELSE '{' $@3 GlobalStatementList '}'
+
+    ELSE  shift, and go to state 53
+
+    ELSE      [reduce using rule 7 (GlobalStatement)]
+    $default  reduce using rule 7 (GlobalStatement)
+
+
+State 15
+
+    4 GlobalStatement: FunctionDeclStmt •
+
+    $default  reduce using rule 4 (GlobalStatement)
+
+
+State 16
+
+    6 GlobalStatement: OPTIONAL_NEWLINE •
+   15 IfStatement: OPTIONAL_NEWLINE •
+
+    $end      reduce using rule 6 (GlobalStatement)
+    $end      [reduce using rule 15 (IfStatement)]
+    LET       reduce using rule 6 (GlobalStatement)
+    LET       [reduce using rule 15 (IfStatement)]
+    NEWLINE   reduce using rule 6 (GlobalStatement)
+    NEWLINE   [reduce using rule 15 (IfStatement)]
+    IF        reduce using rule 6 (GlobalStatement)
+    IF        [reduce using rule 15 (IfStatement)]
+    ELSE      reduce using rule 6 (GlobalStatement)
+    ELSE      [reduce using rule 15 (IfStatement)]
+    WHILE     reduce using rule 6 (GlobalStatement)
+    WHILE     [reduce using rule 15 (IfStatement)]
+    PRINT     reduce using rule 6 (GlobalStatement)
+    PRINT     [reduce using rule 15 (IfStatement)]
+    PRINTLN   reduce using rule 6 (GlobalStatement)
+    PRINTLN   [reduce using rule 15 (IfStatement)]
+    FUNC      reduce using rule 6 (GlobalStatement)
+    FUNC      [reduce using rule 15 (IfStatement)]
+    ID        reduce using rule 6 (GlobalStatement)
+    ID        [reduce using rule 15 (IfStatement)]
+    '{'       reduce using rule 6 (GlobalStatement)
+    '{'       [reduce using rule 15 (IfStatement)]
+    '}'       reduce using rule 6 (GlobalStatement)
+    '}'       [reduce using rule 15 (IfStatement)]
+    $default  reduce using rule 6 (GlobalStatement)
+
+
+State 17
+
+   18 FunctionDeclStmt: LET MUT • ID OPTION_STORE
+   19                 | LET MUT • ID '=' STORE_DATA ';'
+
+    ID  shift, and go to state 54
+
+
+State 18
+
+   17 FunctionDeclStmt: LET ID • ':' Type OPTION_STORE
+
+    ':'  shift, and go to state 55
+
+
+State 19
+
+   67 Factor: TRUE •
+   94 DATA: TRUE •
+
+    '{'       reduce using rule 67 (Factor)
+    '{'       [reduce using rule 94 (DATA)]
+    ')'       reduce using rule 67 (Factor)
+    ')'       [reduce using rule 94 (DATA)]
+    ';'       reduce using rule 67 (Factor)
+    ';'       [reduce using rule 94 (DATA)]
+    $default  reduce using rule 67 (Factor)
+
+
+State 20
+
+   68 Factor: FALSE •
+   95 DATA: FALSE •
+
+    '{'       reduce using rule 68 (Factor)
+    '{'       [reduce using rule 95 (DATA)]
+    ')'       reduce using rule 68 (Factor)
+    ')'       [reduce using rule 95 (DATA)]
+    ';'       reduce using rule 68 (Factor)
+    ';'       [reduce using rule 95 (DATA)]
+    $default  reduce using rule 68 (Factor)
+
+
+State 21
+
+   64 Factor: ID •
+   69       | ID • '[' INT_LIT ']'
+
+    '['  shift, and go to state 56
+
+    $default  reduce using rule 64 (Factor)
+
+
+State 22
+
+   65 Factor: INT_LIT •
+   91 DATA: INT_LIT •
+
+    '{'       reduce using rule 65 (Factor)
+    '{'       [reduce using rule 91 (DATA)]
+    ')'       reduce using rule 65 (Factor)
+    ')'       [reduce using rule 91 (DATA)]
+    ';'       reduce using rule 65 (Factor)
+    ';'       [reduce using rule 91 (DATA)]
+    $default  reduce using rule 65 (Factor)
+
+
+State 23
+
+   66 Factor: FLOAT_LIT •
+   92 DATA: FLOAT_LIT •
+
+    '{'       reduce using rule 66 (Factor)
+    '{'       [reduce using rule 92 (DATA)]
+    ')'       reduce using rule 66 (Factor)
+    ')'       [reduce using rule 92 (DATA)]
+    ';'       reduce using rule 66 (Factor)
+    ';'       [reduce using rule 92 (DATA)]
+    $default  reduce using rule 66 (Factor)
+
+
+State 24
+
+   62 Factor: '-' • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 61
+
+
+State 25
+
+   63 Factor: '!' • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 62
+
+
+State 26
+
+   59 Factor: '(' • Expr ')'
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 19
+    FALSE      shift, and go to state 20
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 22
+    FLOAT_LIT  shift, and go to state 23
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+    '"'        shift, and go to state 27
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Expr              go to state 63
+    LORExpr           go to state 29
+    LANDExpr          go to state 30
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 36
+    DATA              go to state 37
+
+
+State 27
+
+   93 DATA: '"' • STRING_LIT '"'
+
+    STRING_LIT  shift, and go to state 64
+
+
+State 28
+
+   12 IfStatement: IF Expr • '{' $@2 GlobalStatementList '}'
+
+    '{'  shift, and go to state 65
+
+
+State 29
+
+   32 Expr: LORExpr •
+   34 LORExpr: LORExpr • LOR LANDExpr
+
+    LOR  shift, and go to state 66
+
+    $default  reduce using rule 32 (Expr)
+
+
+State 30
+
+   35 LORExpr: LANDExpr •
+   37 LANDExpr: LANDExpr • LAND EqualityExpr
+
+    LAND  shift, and go to state 67
+
+    $default  reduce using rule 35 (LORExpr)
+
+
+State 31
+
+   38 LANDExpr: EqualityExpr •
+   40 EqualityExpr: EqualityExpr • EQL RelExpr
+   41             | EqualityExpr • NEQ RelExpr
+
+    EQL  shift, and go to state 68
+    NEQ  shift, and go to state 69
+
+    $default  reduce using rule 38 (LANDExpr)
+
+
+State 32
+
+   42 EqualityExpr: RelExpr •
+   44 RelExpr: RelExpr • '>' AddExpr
+   45        | RelExpr • '<' AddExpr
+   46        | RelExpr • GEQ AddExpr
+   47        | RelExpr • LEQ AddExpr
+
+    GEQ  shift, and go to state 70
+    LEQ  shift, and go to state 71
+    '>'  shift, and go to state 72
+    '<'  shift, and go to state 73
+
+    $default  reduce using rule 42 (EqualityExpr)
+
+
+State 33
+
+   48 RelExpr: AddExpr •
+   50 AddExpr: AddExpr • '+' Term
+   51        | AddExpr • '-' Term
+
+    '+'  shift, and go to state 74
+    '-'  shift, and go to state 75
+
+    $default  reduce using rule 48 (RelExpr)
+
+
+State 34
+
+   52 AddExpr: Term •
+   54 Term: Term • '*' Factor
+   55     | Term • '/' Factor
+   56     | Term • '%' Factor
+
+    '*'  shift, and go to state 76
+    '/'  shift, and go to state 77
+    '%'  shift, and go to state 78
+
+    $default  reduce using rule 52 (AddExpr)
+
+
+State 35
+
+   57 Term: Factor •
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   70       | Factor • AS Type
+
+    AS      shift, and go to state 79
+    RSHIFT  shift, and go to state 80
+    LSHIFT  shift, and go to state 81
+
+    $default  reduce using rule 57 (Term)
+
+
+State 36
+
+   36 LORExpr: OPTIONAL_NEWLINE •
+   39 LANDExpr: OPTIONAL_NEWLINE •
+   43 EqualityExpr: OPTIONAL_NEWLINE •
+   49 RelExpr: OPTIONAL_NEWLINE •
+   53 AddExpr: OPTIONAL_NEWLINE •
+   58 Term: OPTIONAL_NEWLINE •
+
+    GEQ       reduce using rule 49 (RelExpr)
+    GEQ       [reduce using rule 53 (AddExpr)]
+    GEQ       [reduce using rule 58 (Term)]
+    LEQ       reduce using rule 49 (RelExpr)
+    LEQ       [reduce using rule 53 (AddExpr)]
+    LEQ       [reduce using rule 58 (Term)]
+    EQL       reduce using rule 43 (EqualityExpr)
+    EQL       [reduce using rule 49 (RelExpr)]
+    EQL       [reduce using rule 53 (AddExpr)]
+    EQL       [reduce using rule 58 (Term)]
+    NEQ       reduce using rule 43 (EqualityExpr)
+    NEQ       [reduce using rule 49 (RelExpr)]
+    NEQ       [reduce using rule 53 (AddExpr)]
+    NEQ       [reduce using rule 58 (Term)]
+    LOR       reduce using rule 36 (LORExpr)
+    LOR       [reduce using rule 39 (LANDExpr)]
+    LOR       [reduce using rule 43 (EqualityExpr)]
+    LOR       [reduce using rule 49 (RelExpr)]
+    LOR       [reduce using rule 53 (AddExpr)]
+    LOR       [reduce using rule 58 (Term)]
+    LAND      reduce using rule 39 (LANDExpr)
+    LAND      [reduce using rule 43 (EqualityExpr)]
+    LAND      [reduce using rule 49 (RelExpr)]
+    LAND      [reduce using rule 53 (AddExpr)]
+    LAND      [reduce using rule 58 (Term)]
+    '>'       reduce using rule 49 (RelExpr)
+    '>'       [reduce using rule 53 (AddExpr)]
+    '>'       [reduce using rule 58 (Term)]
+    '<'       reduce using rule 49 (RelExpr)
+    '<'       [reduce using rule 53 (AddExpr)]
+    '<'       [reduce using rule 58 (Term)]
+    '+'       reduce using rule 53 (AddExpr)
+    '+'       [reduce using rule 58 (Term)]
+    '-'       reduce using rule 53 (AddExpr)
+    '-'       [reduce using rule 58 (Term)]
+    '*'       reduce using rule 58 (Term)
+    '/'       reduce using rule 58 (Term)
+    '%'       reduce using rule 58 (Term)
+    '{'       reduce using rule 36 (LORExpr)
+    '{'       [reduce using rule 39 (LANDExpr)]
+    '{'       [reduce using rule 43 (EqualityExpr)]
+    '{'       [reduce using rule 49 (RelExpr)]
+    '{'       [reduce using rule 53 (AddExpr)]
+    '{'       [reduce using rule 58 (Term)]
+    ')'       reduce using rule 36 (LORExpr)
+    ')'       [reduce using rule 39 (LANDExpr)]
+    ')'       [reduce using rule 43 (EqualityExpr)]
+    ')'       [reduce using rule 49 (RelExpr)]
+    ')'       [reduce using rule 53 (AddExpr)]
+    ')'       [reduce using rule 58 (Term)]
+    ';'       reduce using rule 36 (LORExpr)
+    ';'       [reduce using rule 39 (LANDExpr)]
+    ';'       [reduce using rule 43 (EqualityExpr)]
+    ';'       [reduce using rule 49 (RelExpr)]
+    ';'       [reduce using rule 53 (AddExpr)]
+    ';'       [reduce using rule 58 (Term)]
+    $default  reduce using rule 36 (LORExpr)
+
+
+State 37
+
+   33 Expr: DATA •
+
+    $default  reduce using rule 33 (Expr)
+
+
+State 38
+
+   10 WhileStatement: WHILE Expr • '{' $@1 GlobalStatementList '}'
+
+    '{'  shift, and go to state 82
+
+
+State 39
+
+   22 FunctionDeclStmt: PRINT '(' • Expr ')' ';'
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 19
+    FALSE      shift, and go to state 20
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 22
+    FLOAT_LIT  shift, and go to state 23
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+    '"'        shift, and go to state 27
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Expr              go to state 83
+    LORExpr           go to state 29
+    LANDExpr          go to state 30
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 36
+    DATA              go to state 37
+
+
+State 40
+
+   21 FunctionDeclStmt: PRINTLN $@4 • '(' Expr ')' ';'
+
+    '('  shift, and go to state 84
+
+
+State 41
+
+   16 FunctionDeclStmt: FUNC ID • '(' ')' '{' OPTIONAL_NEWLINE GlobalStatementList '}'
+
+    '('  shift, and go to state 85
+
+
+State 42
+
+   27 ASSIGN: ADD_ASSIGN •
+
+    $default  reduce using rule 27 (ASSIGN)
+
+
+State 43
+
+   28 ASSIGN: SUB_ASSIGN •
+
+    $default  reduce using rule 28 (ASSIGN)
+
+
+State 44
+
+   29 ASSIGN: MUL_ASSIGN •
+
+    $default  reduce using rule 29 (ASSIGN)
+
+
+State 45
+
+   30 ASSIGN: DIV_ASSIGN •
+
+    $default  reduce using rule 30 (ASSIGN)
+
+
+State 46
+
+   31 ASSIGN: REM_ASSIGN •
+
+    $default  reduce using rule 31 (ASSIGN)
+
+
+State 47
+
+   26 ASSIGN: '=' •
+
+    $default  reduce using rule 26 (ASSIGN)
+
+
+State 48
+
+   23 FunctionDeclStmt: ID ASSIGN • Expr ';'
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 19
+    FALSE      shift, and go to state 20
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 22
+    FLOAT_LIT  shift, and go to state 23
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+    '"'        shift, and go to state 27
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Expr              go to state 86
+    LORExpr           go to state 29
+    LANDExpr          go to state 30
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 36
+    DATA              go to state 37
+
+
+State 49
+
+    5 GlobalStatement: '{' OPTIONAL_NEWLINE • GlobalStatementList '}' OPTIONAL_NEWLINE
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatementList  go to state 87
+    GlobalStatement      go to state 12
+    WhileStatement       go to state 13
+    IfStatement          go to state 14
+    FunctionDeclStmt     go to state 15
+    OPTIONAL_NEWLINE     go to state 16
+
+
+State 50
+
+    0 $accept: Program $end •
+
+    $default  accept
+
+
+State 51
+
+    2 GlobalStatementList: GlobalStatementList GlobalStatement •
+
+    $default  reduce using rule 2 (GlobalStatementList)
+
+
+State 52
+
+    1 Program: GlobalStatementList OPTIONAL_NEWLINE •
+    6 GlobalStatement: OPTIONAL_NEWLINE •
+   15 IfStatement: OPTIONAL_NEWLINE •
+
+    $end      reduce using rule 1 (Program)
+    $end      [reduce using rule 6 (GlobalStatement)]
+    $end      [reduce using rule 15 (IfStatement)]
+    LET       reduce using rule 6 (GlobalStatement)
+    LET       [reduce using rule 15 (IfStatement)]
+    NEWLINE   reduce using rule 6 (GlobalStatement)
+    NEWLINE   [reduce using rule 15 (IfStatement)]
+    IF        reduce using rule 6 (GlobalStatement)
+    IF        [reduce using rule 15 (IfStatement)]
+    ELSE      reduce using rule 6 (GlobalStatement)
+    ELSE      [reduce using rule 15 (IfStatement)]
+    WHILE     reduce using rule 6 (GlobalStatement)
+    WHILE     [reduce using rule 15 (IfStatement)]
+    PRINT     reduce using rule 6 (GlobalStatement)
+    PRINT     [reduce using rule 15 (IfStatement)]
+    PRINTLN   reduce using rule 6 (GlobalStatement)
+    PRINTLN   [reduce using rule 15 (IfStatement)]
+    FUNC      reduce using rule 6 (GlobalStatement)
+    FUNC      [reduce using rule 15 (IfStatement)]
+    ID        reduce using rule 6 (GlobalStatement)
+    ID        [reduce using rule 15 (IfStatement)]
+    '{'       reduce using rule 6 (GlobalStatement)
+    '{'       [reduce using rule 15 (IfStatement)]
+    $default  reduce using rule 6 (GlobalStatement)
+
+
+State 53
+
+   14 IfStatement: IfStatement ELSE • '{' $@3 GlobalStatementList '}'
+
+    '{'  shift, and go to state 88
+
+
+State 54
+
+   18 FunctionDeclStmt: LET MUT ID • OPTION_STORE
+   19                 | LET MUT ID • '=' STORE_DATA ';'
+
+    TRUE       shift, and go to state 89
+    FALSE      shift, and go to state 90
+    INT_LIT    shift, and go to state 91
+    FLOAT_LIT  shift, and go to state 92
+    '='        shift, and go to state 93
+    '['        shift, and go to state 94
+    '"'        shift, and go to state 95
+
+    $default  reduce using rule 85 (STORE_DATA)
+
+    OPTION_STORE  go to state 96
+    STORE_DATA    go to state 97
+
+
+State 55
+
+   17 FunctionDeclStmt: LET ID ':' • Type OPTION_STORE
+
+    INT    shift, and go to state 98
+    FLOAT  shift, and go to state 99
+    BOOL   shift, and go to state 100
+    STR    shift, and go to state 101
+    '['    shift, and go to state 102
+    '&'    shift, and go to state 103
+
+    Type  go to state 104
+
+
+State 56
+
+   69 Factor: ID '[' • INT_LIT ']'
+
+    INT_LIT  shift, and go to state 105
+
+
+State 57
+
+   67 Factor: TRUE •
+
+    $default  reduce using rule 67 (Factor)
+
+
+State 58
+
+   68 Factor: FALSE •
+
+    $default  reduce using rule 68 (Factor)
+
+
+State 59
+
+   65 Factor: INT_LIT •
+
+    $default  reduce using rule 65 (Factor)
+
+
+State 60
+
+   66 Factor: FLOAT_LIT •
+
+    $default  reduce using rule 66 (Factor)
+
+
+State 61
+
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   62       | '-' Factor •
+   70       | Factor • AS Type
+
+    AS  shift, and go to state 79
+
+    AS        [reduce using rule 62 (Factor)]
+    $default  reduce using rule 62 (Factor)
+
+
+State 62
+
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   63       | '!' Factor •
+   70       | Factor • AS Type
+
+    AS  shift, and go to state 79
+
+    AS        [reduce using rule 63 (Factor)]
+    $default  reduce using rule 63 (Factor)
+
+
+State 63
+
+   59 Factor: '(' Expr • ')'
+
+    ')'  shift, and go to state 106
+
+
+State 64
+
+   93 DATA: '"' STRING_LIT • '"'
+
+    '"'  shift, and go to state 107
+
+
+State 65
+
+   12 IfStatement: IF Expr '{' • $@2 GlobalStatementList '}'
+
+    $default  reduce using rule 11 ($@2)
+
+    $@2  go to state 108
+
+
+State 66
+
+   34 LORExpr: LORExpr LOR • LANDExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    LANDExpr          go to state 109
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 110
+
+
+State 67
+
+   37 LANDExpr: LANDExpr LAND • EqualityExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    EqualityExpr      go to state 111
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 112
+
+
+State 68
+
+   40 EqualityExpr: EqualityExpr EQL • RelExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    RelExpr           go to state 113
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 114
+
+
+State 69
+
+   41 EqualityExpr: EqualityExpr NEQ • RelExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    RelExpr           go to state 115
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 114
+
+
+State 70
+
+   46 RelExpr: RelExpr GEQ • AddExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    AddExpr           go to state 116
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 117
+
+
+State 71
+
+   47 RelExpr: RelExpr LEQ • AddExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    AddExpr           go to state 118
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 117
+
+
+State 72
+
+   44 RelExpr: RelExpr '>' • AddExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    AddExpr           go to state 119
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 117
+
+
+State 73
+
+   45 RelExpr: RelExpr '<' • AddExpr
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    AddExpr           go to state 120
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 117
+
+
+State 74
+
+   50 AddExpr: AddExpr '+' • Term
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Term              go to state 121
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 122
+
+
+State 75
+
+   51 AddExpr: AddExpr '-' • Term
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Term              go to state 123
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 122
+
+
+State 76
+
+   54 Term: Term '*' • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 124
+
+
+State 77
+
+   55 Term: Term '/' • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 125
+
+
+State 78
+
+   56 Term: Term '%' • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 126
+
+
+State 79
+
+   70 Factor: Factor AS • Type
+
+    INT    shift, and go to state 98
+    FLOAT  shift, and go to state 99
+    BOOL   shift, and go to state 100
+    STR    shift, and go to state 101
+    '['    shift, and go to state 102
+    '&'    shift, and go to state 103
+
+    Type  go to state 127
+
+
+State 80
+
+   61 Factor: Factor RSHIFT • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 128
+
+
+State 81
+
+   60 Factor: Factor LSHIFT • Factor
+
+    TRUE       shift, and go to state 57
+    FALSE      shift, and go to state 58
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 59
+    FLOAT_LIT  shift, and go to state 60
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+
+    Factor  go to state 129
+
+
+State 82
+
+   10 WhileStatement: WHILE Expr '{' • $@1 GlobalStatementList '}'
+
+    $default  reduce using rule 9 ($@1)
+
+    $@1  go to state 130
+
+
+State 83
+
+   22 FunctionDeclStmt: PRINT '(' Expr • ')' ';'
+
+    ')'  shift, and go to state 131
+
+
+State 84
+
+   21 FunctionDeclStmt: PRINTLN $@4 '(' • Expr ')' ';'
+
+    NEWLINE    shift, and go to state 2
+    TRUE       shift, and go to state 19
+    FALSE      shift, and go to state 20
+    ID         shift, and go to state 21
+    INT_LIT    shift, and go to state 22
+    FLOAT_LIT  shift, and go to state 23
+    '-'        shift, and go to state 24
+    '!'        shift, and go to state 25
+    '('        shift, and go to state 26
+    '"'        shift, and go to state 27
+
+    '-'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    Expr              go to state 132
+    LORExpr           go to state 29
+    LANDExpr          go to state 30
+    EqualityExpr      go to state 31
+    RelExpr           go to state 32
+    AddExpr           go to state 33
+    Term              go to state 34
+    Factor            go to state 35
+    OPTIONAL_NEWLINE  go to state 36
+    DATA              go to state 37
+
+
+State 85
+
+   16 FunctionDeclStmt: FUNC ID '(' • ')' '{' OPTIONAL_NEWLINE GlobalStatementList '}'
+
+    ')'  shift, and go to state 133
+
+
+State 86
+
+   23 FunctionDeclStmt: ID ASSIGN Expr • ';'
+
+    ';'  shift, and go to state 134
+
+
+State 87
+
+    2 GlobalStatementList: GlobalStatementList • GlobalStatement
+    5 GlobalStatement: '{' OPTIONAL_NEWLINE GlobalStatementList • '}' OPTIONAL_NEWLINE
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+    '}'      shift, and go to state 135
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '}'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatement   go to state 51
+    WhileStatement    go to state 13
+    IfStatement       go to state 14
+    FunctionDeclStmt  go to state 15
+    OPTIONAL_NEWLINE  go to state 16
+
+
+State 88
+
+   14 IfStatement: IfStatement ELSE '{' • $@3 GlobalStatementList '}'
+
+    $default  reduce using rule 13 ($@3)
+
+    $@3  go to state 136
+
+
+State 89
+
+   83 STORE_DATA: TRUE •
+
+    $default  reduce using rule 83 (STORE_DATA)
+
+
+State 90
+
+   84 STORE_DATA: FALSE •
+
+    $default  reduce using rule 84 (STORE_DATA)
+
+
+State 91
+
+   80 STORE_DATA: INT_LIT •
+
+    $default  reduce using rule 80 (STORE_DATA)
+
+
+State 92
+
+   81 STORE_DATA: FLOAT_LIT •
+
+    $default  reduce using rule 81 (STORE_DATA)
+
+
+State 93
+
+   19 FunctionDeclStmt: LET MUT ID '=' • STORE_DATA ';'
+   24 OPTION_STORE: '=' • STORE_DATA ';'
+
+    TRUE       shift, and go to state 89
+    FALSE      shift, and go to state 90
+    INT_LIT    shift, and go to state 91
+    FLOAT_LIT  shift, and go to state 92
+    '['        shift, and go to state 94
+    '"'        shift, and go to state 95
+
+    $default  reduce using rule 85 (STORE_DATA)
+
+    STORE_DATA  go to state 137
+
+
+State 94
+
+   87 STORE_DATA: '[' • INT_LIT $@6 OPTION_ELEMENT
+
+    INT_LIT  shift, and go to state 138
+
+
+State 95
+
+   82 STORE_DATA: '"' • STRING_LIT '"'
+
+    STRING_LIT  shift, and go to state 139
+
+
+State 96
+
+   18 FunctionDeclStmt: LET MUT ID OPTION_STORE •
+
+    $default  reduce using rule 18 (FunctionDeclStmt)
+
+
+State 97
+
+   25 OPTION_STORE: STORE_DATA • ';'
+
+    ';'  shift, and go to state 140
+
+
+State 98
+
+   71 Type: INT •
+
+    $default  reduce using rule 71 (Type)
+
+
+State 99
+
+   72 Type: FLOAT •
+
+    $default  reduce using rule 72 (Type)
+
+
+State 100
+
+   73 Type: BOOL •
+
+    $default  reduce using rule 73 (Type)
+
+
+State 101
+
+   74 Type: STR •
+
+    $default  reduce using rule 74 (Type)
+
+
+State 102
+
+   77 Type: '[' • INT ';' INT_LIT $@5 ']'
+
+    INT  shift, and go to state 141
+
+
+State 103
+
+   75 Type: '&' • STR
+
+    STR  shift, and go to state 142
+
+
+State 104
+
+   17 FunctionDeclStmt: LET ID ':' Type • OPTION_STORE
+
+    TRUE       shift, and go to state 89
+    FALSE      shift, and go to state 90
+    INT_LIT    shift, and go to state 91
+    FLOAT_LIT  shift, and go to state 92
+    '='        shift, and go to state 143
+    '['        shift, and go to state 94
+    '"'        shift, and go to state 95
+
+    $default  reduce using rule 85 (STORE_DATA)
+
+    OPTION_STORE  go to state 144
+    STORE_DATA    go to state 97
+
+
+State 105
+
+   69 Factor: ID '[' INT_LIT • ']'
+
+    ']'  shift, and go to state 145
+
+
+State 106
+
+   59 Factor: '(' Expr ')' •
+
+    $default  reduce using rule 59 (Factor)
+
+
+State 107
+
+   93 DATA: '"' STRING_LIT '"' •
+
+    $default  reduce using rule 93 (DATA)
+
+
+State 108
+
+   12 IfStatement: IF Expr '{' $@2 • GlobalStatementList '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatementList  go to state 146
+    GlobalStatement      go to state 12
+    WhileStatement       go to state 13
+    IfStatement          go to state 14
+    FunctionDeclStmt     go to state 15
+    OPTIONAL_NEWLINE     go to state 16
+
+
+State 109
+
+   34 LORExpr: LORExpr LOR LANDExpr •
+   37 LANDExpr: LANDExpr • LAND EqualityExpr
+
+    LAND  shift, and go to state 67
+
+    $default  reduce using rule 34 (LORExpr)
+
+
+State 110
+
+   39 LANDExpr: OPTIONAL_NEWLINE •
+   43 EqualityExpr: OPTIONAL_NEWLINE •
+   49 RelExpr: OPTIONAL_NEWLINE •
+   53 AddExpr: OPTIONAL_NEWLINE •
+   58 Term: OPTIONAL_NEWLINE •
+
+    GEQ       reduce using rule 49 (RelExpr)
+    GEQ       [reduce using rule 53 (AddExpr)]
+    GEQ       [reduce using rule 58 (Term)]
+    LEQ       reduce using rule 49 (RelExpr)
+    LEQ       [reduce using rule 53 (AddExpr)]
+    LEQ       [reduce using rule 58 (Term)]
+    EQL       reduce using rule 43 (EqualityExpr)
+    EQL       [reduce using rule 49 (RelExpr)]
+    EQL       [reduce using rule 53 (AddExpr)]
+    EQL       [reduce using rule 58 (Term)]
+    NEQ       reduce using rule 43 (EqualityExpr)
+    NEQ       [reduce using rule 49 (RelExpr)]
+    NEQ       [reduce using rule 53 (AddExpr)]
+    NEQ       [reduce using rule 58 (Term)]
+    LOR       reduce using rule 39 (LANDExpr)
+    LOR       [reduce using rule 43 (EqualityExpr)]
+    LOR       [reduce using rule 49 (RelExpr)]
+    LOR       [reduce using rule 53 (AddExpr)]
+    LOR       [reduce using rule 58 (Term)]
+    LAND      reduce using rule 39 (LANDExpr)
+    LAND      [reduce using rule 43 (EqualityExpr)]
+    LAND      [reduce using rule 49 (RelExpr)]
+    LAND      [reduce using rule 53 (AddExpr)]
+    LAND      [reduce using rule 58 (Term)]
+    '>'       reduce using rule 49 (RelExpr)
+    '>'       [reduce using rule 53 (AddExpr)]
+    '>'       [reduce using rule 58 (Term)]
+    '<'       reduce using rule 49 (RelExpr)
+    '<'       [reduce using rule 53 (AddExpr)]
+    '<'       [reduce using rule 58 (Term)]
+    '+'       reduce using rule 53 (AddExpr)
+    '+'       [reduce using rule 58 (Term)]
+    '-'       reduce using rule 53 (AddExpr)
+    '-'       [reduce using rule 58 (Term)]
+    '*'       reduce using rule 58 (Term)
+    '/'       reduce using rule 58 (Term)
+    '%'       reduce using rule 58 (Term)
+    '{'       reduce using rule 39 (LANDExpr)
+    '{'       [reduce using rule 43 (EqualityExpr)]
+    '{'       [reduce using rule 49 (RelExpr)]
+    '{'       [reduce using rule 53 (AddExpr)]
+    '{'       [reduce using rule 58 (Term)]
+    ')'       reduce using rule 39 (LANDExpr)
+    ')'       [reduce using rule 43 (EqualityExpr)]
+    ')'       [reduce using rule 49 (RelExpr)]
+    ')'       [reduce using rule 53 (AddExpr)]
+    ')'       [reduce using rule 58 (Term)]
+    ';'       reduce using rule 39 (LANDExpr)
+    ';'       [reduce using rule 43 (EqualityExpr)]
+    ';'       [reduce using rule 49 (RelExpr)]
+    ';'       [reduce using rule 53 (AddExpr)]
+    ';'       [reduce using rule 58 (Term)]
+    $default  reduce using rule 39 (LANDExpr)
+
+
+State 111
+
+   37 LANDExpr: LANDExpr LAND EqualityExpr •
+   40 EqualityExpr: EqualityExpr • EQL RelExpr
+   41             | EqualityExpr • NEQ RelExpr
+
+    EQL  shift, and go to state 68
+    NEQ  shift, and go to state 69
+
+    $default  reduce using rule 37 (LANDExpr)
+
+
+State 112
+
+   43 EqualityExpr: OPTIONAL_NEWLINE •
+   49 RelExpr: OPTIONAL_NEWLINE •
+   53 AddExpr: OPTIONAL_NEWLINE •
+   58 Term: OPTIONAL_NEWLINE •
+
+    GEQ       reduce using rule 49 (RelExpr)
+    GEQ       [reduce using rule 53 (AddExpr)]
+    GEQ       [reduce using rule 58 (Term)]
+    LEQ       reduce using rule 49 (RelExpr)
+    LEQ       [reduce using rule 53 (AddExpr)]
+    LEQ       [reduce using rule 58 (Term)]
+    EQL       reduce using rule 43 (EqualityExpr)
+    EQL       [reduce using rule 49 (RelExpr)]
+    EQL       [reduce using rule 53 (AddExpr)]
+    EQL       [reduce using rule 58 (Term)]
+    NEQ       reduce using rule 43 (EqualityExpr)
+    NEQ       [reduce using rule 49 (RelExpr)]
+    NEQ       [reduce using rule 53 (AddExpr)]
+    NEQ       [reduce using rule 58 (Term)]
+    LOR       reduce using rule 43 (EqualityExpr)
+    LOR       [reduce using rule 49 (RelExpr)]
+    LOR       [reduce using rule 53 (AddExpr)]
+    LOR       [reduce using rule 58 (Term)]
+    LAND      reduce using rule 43 (EqualityExpr)
+    LAND      [reduce using rule 49 (RelExpr)]
+    LAND      [reduce using rule 53 (AddExpr)]
+    LAND      [reduce using rule 58 (Term)]
+    '>'       reduce using rule 49 (RelExpr)
+    '>'       [reduce using rule 53 (AddExpr)]
+    '>'       [reduce using rule 58 (Term)]
+    '<'       reduce using rule 49 (RelExpr)
+    '<'       [reduce using rule 53 (AddExpr)]
+    '<'       [reduce using rule 58 (Term)]
+    '+'       reduce using rule 53 (AddExpr)
+    '+'       [reduce using rule 58 (Term)]
+    '-'       reduce using rule 53 (AddExpr)
+    '-'       [reduce using rule 58 (Term)]
+    '*'       reduce using rule 58 (Term)
+    '/'       reduce using rule 58 (Term)
+    '%'       reduce using rule 58 (Term)
+    '{'       reduce using rule 43 (EqualityExpr)
+    '{'       [reduce using rule 49 (RelExpr)]
+    '{'       [reduce using rule 53 (AddExpr)]
+    '{'       [reduce using rule 58 (Term)]
+    ')'       reduce using rule 43 (EqualityExpr)
+    ')'       [reduce using rule 49 (RelExpr)]
+    ')'       [reduce using rule 53 (AddExpr)]
+    ')'       [reduce using rule 58 (Term)]
+    ';'       reduce using rule 43 (EqualityExpr)
+    ';'       [reduce using rule 49 (RelExpr)]
+    ';'       [reduce using rule 53 (AddExpr)]
+    ';'       [reduce using rule 58 (Term)]
+    $default  reduce using rule 43 (EqualityExpr)
+
+
+State 113
+
+   40 EqualityExpr: EqualityExpr EQL RelExpr •
+   44 RelExpr: RelExpr • '>' AddExpr
+   45        | RelExpr • '<' AddExpr
+   46        | RelExpr • GEQ AddExpr
+   47        | RelExpr • LEQ AddExpr
+
+    GEQ  shift, and go to state 70
+    LEQ  shift, and go to state 71
+    '>'  shift, and go to state 72
+    '<'  shift, and go to state 73
+
+    $default  reduce using rule 40 (EqualityExpr)
+
+
+State 114
+
+   49 RelExpr: OPTIONAL_NEWLINE •
+   53 AddExpr: OPTIONAL_NEWLINE •
+   58 Term: OPTIONAL_NEWLINE •
+
+    GEQ       reduce using rule 49 (RelExpr)
+    GEQ       [reduce using rule 53 (AddExpr)]
+    GEQ       [reduce using rule 58 (Term)]
+    LEQ       reduce using rule 49 (RelExpr)
+    LEQ       [reduce using rule 53 (AddExpr)]
+    LEQ       [reduce using rule 58 (Term)]
+    EQL       reduce using rule 49 (RelExpr)
+    EQL       [reduce using rule 53 (AddExpr)]
+    EQL       [reduce using rule 58 (Term)]
+    NEQ       reduce using rule 49 (RelExpr)
+    NEQ       [reduce using rule 53 (AddExpr)]
+    NEQ       [reduce using rule 58 (Term)]
+    LOR       reduce using rule 49 (RelExpr)
+    LOR       [reduce using rule 53 (AddExpr)]
+    LOR       [reduce using rule 58 (Term)]
+    LAND      reduce using rule 49 (RelExpr)
+    LAND      [reduce using rule 53 (AddExpr)]
+    LAND      [reduce using rule 58 (Term)]
+    '>'       reduce using rule 49 (RelExpr)
+    '>'       [reduce using rule 53 (AddExpr)]
+    '>'       [reduce using rule 58 (Term)]
+    '<'       reduce using rule 49 (RelExpr)
+    '<'       [reduce using rule 53 (AddExpr)]
+    '<'       [reduce using rule 58 (Term)]
+    '+'       reduce using rule 53 (AddExpr)
+    '+'       [reduce using rule 58 (Term)]
+    '-'       reduce using rule 53 (AddExpr)
+    '-'       [reduce using rule 58 (Term)]
+    '*'       reduce using rule 58 (Term)
+    '/'       reduce using rule 58 (Term)
+    '%'       reduce using rule 58 (Term)
+    '{'       reduce using rule 49 (RelExpr)
+    '{'       [reduce using rule 53 (AddExpr)]
+    '{'       [reduce using rule 58 (Term)]
+    ')'       reduce using rule 49 (RelExpr)
+    ')'       [reduce using rule 53 (AddExpr)]
+    ')'       [reduce using rule 58 (Term)]
+    ';'       reduce using rule 49 (RelExpr)
+    ';'       [reduce using rule 53 (AddExpr)]
+    ';'       [reduce using rule 58 (Term)]
+    $default  reduce using rule 49 (RelExpr)
+
+
+State 115
+
+   41 EqualityExpr: EqualityExpr NEQ RelExpr •
+   44 RelExpr: RelExpr • '>' AddExpr
+   45        | RelExpr • '<' AddExpr
+   46        | RelExpr • GEQ AddExpr
+   47        | RelExpr • LEQ AddExpr
+
+    GEQ  shift, and go to state 70
+    LEQ  shift, and go to state 71
+    '>'  shift, and go to state 72
+    '<'  shift, and go to state 73
+
+    $default  reduce using rule 41 (EqualityExpr)
+
+
+State 116
+
+   46 RelExpr: RelExpr GEQ AddExpr •
+   50 AddExpr: AddExpr • '+' Term
+   51        | AddExpr • '-' Term
+
+    '+'  shift, and go to state 74
+    '-'  shift, and go to state 75
+
+    $default  reduce using rule 46 (RelExpr)
+
+
+State 117
+
+   53 AddExpr: OPTIONAL_NEWLINE •
+   58 Term: OPTIONAL_NEWLINE •
+
+    GEQ       reduce using rule 53 (AddExpr)
+    GEQ       [reduce using rule 58 (Term)]
+    LEQ       reduce using rule 53 (AddExpr)
+    LEQ       [reduce using rule 58 (Term)]
+    EQL       reduce using rule 53 (AddExpr)
+    EQL       [reduce using rule 58 (Term)]
+    NEQ       reduce using rule 53 (AddExpr)
+    NEQ       [reduce using rule 58 (Term)]
+    LOR       reduce using rule 53 (AddExpr)
+    LOR       [reduce using rule 58 (Term)]
+    LAND      reduce using rule 53 (AddExpr)
+    LAND      [reduce using rule 58 (Term)]
+    '>'       reduce using rule 53 (AddExpr)
+    '>'       [reduce using rule 58 (Term)]
+    '<'       reduce using rule 53 (AddExpr)
+    '<'       [reduce using rule 58 (Term)]
+    '+'       reduce using rule 53 (AddExpr)
+    '+'       [reduce using rule 58 (Term)]
+    '-'       reduce using rule 53 (AddExpr)
+    '-'       [reduce using rule 58 (Term)]
+    '*'       reduce using rule 58 (Term)
+    '/'       reduce using rule 58 (Term)
+    '%'       reduce using rule 58 (Term)
+    '{'       reduce using rule 53 (AddExpr)
+    '{'       [reduce using rule 58 (Term)]
+    ')'       reduce using rule 53 (AddExpr)
+    ')'       [reduce using rule 58 (Term)]
+    ';'       reduce using rule 53 (AddExpr)
+    ';'       [reduce using rule 58 (Term)]
+    $default  reduce using rule 53 (AddExpr)
+
+
+State 118
+
+   47 RelExpr: RelExpr LEQ AddExpr •
+   50 AddExpr: AddExpr • '+' Term
+   51        | AddExpr • '-' Term
+
+    '+'  shift, and go to state 74
+    '-'  shift, and go to state 75
+
+    $default  reduce using rule 47 (RelExpr)
+
+
+State 119
+
+   44 RelExpr: RelExpr '>' AddExpr •
+   50 AddExpr: AddExpr • '+' Term
+   51        | AddExpr • '-' Term
+
+    '+'  shift, and go to state 74
+    '-'  shift, and go to state 75
+
+    $default  reduce using rule 44 (RelExpr)
+
+
+State 120
+
+   45 RelExpr: RelExpr '<' AddExpr •
+   50 AddExpr: AddExpr • '+' Term
+   51        | AddExpr • '-' Term
+
+    '+'  shift, and go to state 74
+    '-'  shift, and go to state 75
+
+    $default  reduce using rule 45 (RelExpr)
+
+
+State 121
+
+   50 AddExpr: AddExpr '+' Term •
+   54 Term: Term • '*' Factor
+   55     | Term • '/' Factor
+   56     | Term • '%' Factor
+
+    '*'  shift, and go to state 76
+    '/'  shift, and go to state 77
+    '%'  shift, and go to state 78
+
+    $default  reduce using rule 50 (AddExpr)
+
+
+State 122
+
+   58 Term: OPTIONAL_NEWLINE •
+
+    $default  reduce using rule 58 (Term)
+
+
+State 123
+
+   51 AddExpr: AddExpr '-' Term •
+   54 Term: Term • '*' Factor
+   55     | Term • '/' Factor
+   56     | Term • '%' Factor
+
+    '*'  shift, and go to state 76
+    '/'  shift, and go to state 77
+    '%'  shift, and go to state 78
+
+    $default  reduce using rule 51 (AddExpr)
+
+
+State 124
+
+   54 Term: Term '*' Factor •
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   70       | Factor • AS Type
+
+    AS      shift, and go to state 79
+    RSHIFT  shift, and go to state 80
+    LSHIFT  shift, and go to state 81
+
+    $default  reduce using rule 54 (Term)
+
+
+State 125
+
+   55 Term: Term '/' Factor •
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   70       | Factor • AS Type
+
+    AS      shift, and go to state 79
+    RSHIFT  shift, and go to state 80
+    LSHIFT  shift, and go to state 81
+
+    $default  reduce using rule 55 (Term)
+
+
+State 126
+
+   56 Term: Term '%' Factor •
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   70       | Factor • AS Type
+
+    AS      shift, and go to state 79
+    RSHIFT  shift, and go to state 80
+    LSHIFT  shift, and go to state 81
+
+    $default  reduce using rule 56 (Term)
+
+
+State 127
+
+   70 Factor: Factor AS Type •
+
+    $default  reduce using rule 70 (Factor)
+
+
+State 128
+
+   60 Factor: Factor • LSHIFT Factor
+   61       | Factor • RSHIFT Factor
+   61       | Factor RSHIFT Factor •
+   70       | Factor • AS Type
+
+    AS  shift, and go to state 79
+
+    AS        [reduce using rule 61 (Factor)]
+    $default  reduce using rule 61 (Factor)
+
+
+State 129
+
+   60 Factor: Factor • LSHIFT Factor
+   60       | Factor LSHIFT Factor •
+   61       | Factor • RSHIFT Factor
+   70       | Factor • AS Type
+
+    AS  shift, and go to state 79
+
+    AS        [reduce using rule 60 (Factor)]
+    $default  reduce using rule 60 (Factor)
+
+
+State 130
+
+   10 WhileStatement: WHILE Expr '{' $@1 • GlobalStatementList '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatementList  go to state 147
+    GlobalStatement      go to state 12
+    WhileStatement       go to state 13
+    IfStatement          go to state 14
+    FunctionDeclStmt     go to state 15
+    OPTIONAL_NEWLINE     go to state 16
+
+
+State 131
+
+   22 FunctionDeclStmt: PRINT '(' Expr ')' • ';'
+
+    ';'  shift, and go to state 148
+
+
+State 132
+
+   21 FunctionDeclStmt: PRINTLN $@4 '(' Expr • ')' ';'
+
+    ')'  shift, and go to state 149
+
+
+State 133
+
+   16 FunctionDeclStmt: FUNC ID '(' ')' • '{' OPTIONAL_NEWLINE GlobalStatementList '}'
+
+    '{'  shift, and go to state 150
+
+
+State 134
+
+   23 FunctionDeclStmt: ID ASSIGN Expr ';' •
+
+    $default  reduce using rule 23 (FunctionDeclStmt)
+
+
+State 135
+
+    5 GlobalStatement: '{' OPTIONAL_NEWLINE GlobalStatementList '}' • OPTIONAL_NEWLINE
+
+    NEWLINE  shift, and go to state 2
+
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    OPTIONAL_NEWLINE  go to state 151
+
+
+State 136
+
+   14 IfStatement: IfStatement ELSE '{' $@3 • GlobalStatementList '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatementList  go to state 152
+    GlobalStatement      go to state 12
+    WhileStatement       go to state 13
+    IfStatement          go to state 14
+    FunctionDeclStmt     go to state 15
+    OPTIONAL_NEWLINE     go to state 16
+
+
+State 137
+
+   19 FunctionDeclStmt: LET MUT ID '=' STORE_DATA • ';'
+   24 OPTION_STORE: '=' STORE_DATA • ';'
+
+    ';'  shift, and go to state 153
+
+
+State 138
+
+   87 STORE_DATA: '[' INT_LIT • $@6 OPTION_ELEMENT
+
+    $default  reduce using rule 86 ($@6)
+
+    $@6  go to state 154
+
+
+State 139
+
+   82 STORE_DATA: '"' STRING_LIT • '"'
+
+    '"'  shift, and go to state 155
+
+
+State 140
+
+   25 OPTION_STORE: STORE_DATA ';' •
+
+    $default  reduce using rule 25 (OPTION_STORE)
+
+
+State 141
+
+   77 Type: '[' INT • ';' INT_LIT $@5 ']'
+
+    ';'  shift, and go to state 156
+
+
+State 142
+
+   75 Type: '&' STR •
+
+    $default  reduce using rule 75 (Type)
+
+
+State 143
+
+   24 OPTION_STORE: '=' • STORE_DATA ';'
+
+    TRUE       shift, and go to state 89
+    FALSE      shift, and go to state 90
+    INT_LIT    shift, and go to state 91
+    FLOAT_LIT  shift, and go to state 92
+    '['        shift, and go to state 94
+    '"'        shift, and go to state 95
+
+    $default  reduce using rule 85 (STORE_DATA)
+
+    STORE_DATA  go to state 157
+
+
+State 144
+
+   17 FunctionDeclStmt: LET ID ':' Type OPTION_STORE •
+
+    $default  reduce using rule 17 (FunctionDeclStmt)
+
+
+State 145
+
+   69 Factor: ID '[' INT_LIT ']' •
+
+    $default  reduce using rule 69 (Factor)
+
+
+State 146
+
+    2 GlobalStatementList: GlobalStatementList • GlobalStatement
+   12 IfStatement: IF Expr '{' $@2 GlobalStatementList • '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+    '}'      shift, and go to state 158
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '}'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatement   go to state 51
+    WhileStatement    go to state 13
+    IfStatement       go to state 14
+    FunctionDeclStmt  go to state 15
+    OPTIONAL_NEWLINE  go to state 16
+
+
+State 147
+
+    2 GlobalStatementList: GlobalStatementList • GlobalStatement
+   10 WhileStatement: WHILE Expr '{' $@1 GlobalStatementList • '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+    '}'      shift, and go to state 159
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '}'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatement   go to state 51
+    WhileStatement    go to state 13
+    IfStatement       go to state 14
+    FunctionDeclStmt  go to state 15
+    OPTIONAL_NEWLINE  go to state 16
+
+
+State 148
+
+   22 FunctionDeclStmt: PRINT '(' Expr ')' ';' •
+
+    $default  reduce using rule 22 (FunctionDeclStmt)
+
+
+State 149
+
+   21 FunctionDeclStmt: PRINTLN $@4 '(' Expr ')' • ';'
+
+    ';'  shift, and go to state 160
+
+
+State 150
+
+   16 FunctionDeclStmt: FUNC ID '(' ')' '{' • OPTIONAL_NEWLINE GlobalStatementList '}'
+
+    NEWLINE  shift, and go to state 2
+
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    OPTIONAL_NEWLINE  go to state 161
+
+
+State 151
+
+    5 GlobalStatement: '{' OPTIONAL_NEWLINE GlobalStatementList '}' OPTIONAL_NEWLINE •
+
+    $default  reduce using rule 5 (GlobalStatement)
+
+
+State 152
+
+    2 GlobalStatementList: GlobalStatementList • GlobalStatement
+   14 IfStatement: IfStatement ELSE '{' $@3 GlobalStatementList • '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+    '}'      shift, and go to state 162
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '}'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatement   go to state 51
+    WhileStatement    go to state 13
+    IfStatement       go to state 14
+    FunctionDeclStmt  go to state 15
+    OPTIONAL_NEWLINE  go to state 16
+
+
+State 153
+
+   19 FunctionDeclStmt: LET MUT ID '=' STORE_DATA ';' •
+   24 OPTION_STORE: '=' STORE_DATA ';' •
+
+    $end      reduce using rule 19 (FunctionDeclStmt)
+    $end      [reduce using rule 24 (OPTION_STORE)]
+    LET       reduce using rule 19 (FunctionDeclStmt)
+    LET       [reduce using rule 24 (OPTION_STORE)]
+    NEWLINE   reduce using rule 19 (FunctionDeclStmt)
+    NEWLINE   [reduce using rule 24 (OPTION_STORE)]
+    IF        reduce using rule 19 (FunctionDeclStmt)
+    IF        [reduce using rule 24 (OPTION_STORE)]
+    ELSE      reduce using rule 19 (FunctionDeclStmt)
+    ELSE      [reduce using rule 24 (OPTION_STORE)]
+    WHILE     reduce using rule 19 (FunctionDeclStmt)
+    WHILE     [reduce using rule 24 (OPTION_STORE)]
+    PRINT     reduce using rule 19 (FunctionDeclStmt)
+    PRINT     [reduce using rule 24 (OPTION_STORE)]
+    PRINTLN   reduce using rule 19 (FunctionDeclStmt)
+    PRINTLN   [reduce using rule 24 (OPTION_STORE)]
+    FUNC      reduce using rule 19 (FunctionDeclStmt)
+    FUNC      [reduce using rule 24 (OPTION_STORE)]
+    ID        reduce using rule 19 (FunctionDeclStmt)
+    ID        [reduce using rule 24 (OPTION_STORE)]
+    '{'       reduce using rule 19 (FunctionDeclStmt)
+    '{'       [reduce using rule 24 (OPTION_STORE)]
+    '}'       reduce using rule 19 (FunctionDeclStmt)
+    '}'       [reduce using rule 24 (OPTION_STORE)]
+    $default  reduce using rule 19 (FunctionDeclStmt)
+
+
+State 154
+
+   87 STORE_DATA: '[' INT_LIT $@6 • OPTION_ELEMENT
+
+    ']'  shift, and go to state 163
+    ','  shift, and go to state 164
+
+    OPTION_ELEMENT  go to state 165
+
+
+State 155
+
+   82 STORE_DATA: '"' STRING_LIT '"' •
+
+    $default  reduce using rule 82 (STORE_DATA)
+
+
+State 156
+
+   77 Type: '[' INT ';' • INT_LIT $@5 ']'
+
+    INT_LIT  shift, and go to state 166
+
+
+State 157
+
+   24 OPTION_STORE: '=' STORE_DATA • ';'
+
+    ';'  shift, and go to state 167
+
+
+State 158
+
+   12 IfStatement: IF Expr '{' $@2 GlobalStatementList '}' •
+
+    $default  reduce using rule 12 (IfStatement)
+
+
+State 159
+
+   10 WhileStatement: WHILE Expr '{' $@1 GlobalStatementList '}' •
+
+    $default  reduce using rule 10 (WhileStatement)
+
+
+State 160
+
+   21 FunctionDeclStmt: PRINTLN $@4 '(' Expr ')' ';' •
+
+    $default  reduce using rule 21 (FunctionDeclStmt)
+
+
+State 161
+
+   16 FunctionDeclStmt: FUNC ID '(' ')' '{' OPTIONAL_NEWLINE • GlobalStatementList '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatementList  go to state 168
+    GlobalStatement      go to state 12
+    WhileStatement       go to state 13
+    IfStatement          go to state 14
+    FunctionDeclStmt     go to state 15
+    OPTIONAL_NEWLINE     go to state 16
+
+
+State 162
+
+   14 IfStatement: IfStatement ELSE '{' $@3 GlobalStatementList '}' •
+
+    $default  reduce using rule 14 (IfStatement)
+
+
+State 163
+
+   90 OPTION_ELEMENT: ']' •
+
+    $default  reduce using rule 90 (OPTION_ELEMENT)
+
+
+State 164
+
+   89 OPTION_ELEMENT: ',' • INT_LIT $@7 OPTION_ELEMENT
+
+    INT_LIT  shift, and go to state 169
+
+
+State 165
+
+   87 STORE_DATA: '[' INT_LIT $@6 OPTION_ELEMENT •
+
+    $default  reduce using rule 87 (STORE_DATA)
+
+
+State 166
+
+   77 Type: '[' INT ';' INT_LIT • $@5 ']'
+
+    $default  reduce using rule 76 ($@5)
+
+    $@5  go to state 170
+
+
+State 167
+
+   24 OPTION_STORE: '=' STORE_DATA ';' •
+
+    $default  reduce using rule 24 (OPTION_STORE)
+
+
+State 168
+
+    2 GlobalStatementList: GlobalStatementList • GlobalStatement
+   16 FunctionDeclStmt: FUNC ID '(' ')' '{' OPTIONAL_NEWLINE GlobalStatementList • '}'
+
+    LET      shift, and go to state 1
+    NEWLINE  shift, and go to state 2
+    IF       shift, and go to state 3
+    WHILE    shift, and go to state 4
+    PRINT    shift, and go to state 5
+    PRINTLN  shift, and go to state 6
+    FUNC     shift, and go to state 7
+    ID       shift, and go to state 8
+    '{'      shift, and go to state 9
+    '}'      shift, and go to state 171
+
+    LET       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    NEWLINE   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    IF        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    WHILE     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINT     [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    PRINTLN   [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    FUNC      [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    ID        [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '{'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    '}'       [reduce using rule 79 (OPTIONAL_NEWLINE)]
+    $default  reduce using rule 79 (OPTIONAL_NEWLINE)
+
+    GlobalStatement   go to state 51
+    WhileStatement    go to state 13
+    IfStatement       go to state 14
+    FunctionDeclStmt  go to state 15
+    OPTIONAL_NEWLINE  go to state 16
+
+
+State 169
+
+   89 OPTION_ELEMENT: ',' INT_LIT • $@7 OPTION_ELEMENT
+
+    $default  reduce using rule 88 ($@7)
+
+    $@7  go to state 172
+
+
+State 170
+
+   77 Type: '[' INT ';' INT_LIT $@5 • ']'
+
+    ']'  shift, and go to state 173
+
+
+State 171
+
+   16 FunctionDeclStmt: FUNC ID '(' ')' '{' OPTIONAL_NEWLINE GlobalStatementList '}' •
+
+    $default  reduce using rule 16 (FunctionDeclStmt)
+
+
+State 172
+
+   89 OPTION_ELEMENT: ',' INT_LIT $@7 • OPTION_ELEMENT
+
+    ']'  shift, and go to state 163
+    ','  shift, and go to state 164
+
+    OPTION_ELEMENT  go to state 174
+
+
+State 173
+
+   77 Type: '[' INT ';' INT_LIT $@5 ']' •
+
+    $default  reduce using rule 77 (Type)
+
+
+State 174
+
+   89 OPTION_ELEMENT: ',' INT_LIT $@7 OPTION_ELEMENT •
+
+    $default  reduce using rule 89 (OPTION_ELEMENT)
