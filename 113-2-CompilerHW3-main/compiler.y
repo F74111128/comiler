@@ -180,8 +180,8 @@ FunctionDeclStmt
     { 
         CODEGEN("invokevirtual java/io/PrintStream/println(%s)V\n",type); 
     }
-    | PRINT '(' Expr{
-            strcpy(type, $<s_val>3);
+    | PRINT {CODEGEN("getstatic java/lang/System/out Ljava/io/PrintStream;\n");}'(' Expr{
+            strcpy(type, $<s_val>4);
             if(strcmp(type,"S")==0||strcmp(type,"String")==0){strcpy(type,"Ljava/lang/String;");}
             else if(strcmp(type,"A")==0){strcpy(type,"Ljava/lang/Object;");}
         } ')' ';' {CODEGEN("invokevirtual java/io/PrintStream/println(%s)V\n",type); }
@@ -206,13 +206,13 @@ Expr        : LORExpr { $$ = $1;}
             | DATA
 
 LORExpr     : LORExpr LOR LANDExpr { 
-
+                CODEGEN("ior\n");
             }
             | LANDExpr{ $$ = $1; }
             | OPTIONAL_NEWLINE
 
 LANDExpr    : LANDExpr LAND EqualityExpr { 
-
+                CODEGEN("iand\n");
             }
             | EqualityExpr{ $$ = $1;};
             | OPTIONAL_NEWLINE
@@ -226,9 +226,24 @@ EqualityExpr: EqualityExpr EQL RelExpr {
             | OPTIONAL_NEWLINE
 
 RelExpr     : RelExpr '>' AddExpr { 
-            
                 $$ = "Z"; 
-
+                if(strcmp($1,"F")==0||strcmp($1,"F")==0){
+                    CODEGEN("fcmpg\n");
+                    CODEGEN("ifgt L_float_true\n");
+                    CODEGEN("iconst_0\n");
+                    CODEGEN("goto L_float_cmpend\n");
+                    CODEGEN("L_float_true:\n");
+                    CODEGEN("iconst_1\n");
+                    CODEGEN("L_float_cmpend:\n");
+                }
+                else{
+                CODEGEN("if_icmpgt L_true\n");
+                CODEGEN("iconst_0\n");
+                CODEGEN("goto L_cmpend\n");
+                CODEGEN("L_true:\n");
+                CODEGEN("iconst_1\n");
+                CODEGEN("L_cmpend:\n");
+                }
             }
             | RelExpr '<' AddExpr {
                 $$ = "Z"; 
@@ -306,11 +321,13 @@ Factor
     | '-' Factor {
         if (strcmp(type, "F") == 0) {
             CODEGEN("fneg\n");
+            $$="F";
         } else {
             CODEGEN("ineg\n");
+            $$="I";
         }
     }
-    | '!' Factor {}
+    | '!' Factor {CODEGEN("iconst_1\n");CODEGEN("ixor\n");}
     | ID { char temp[20];
         if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp,"iload");}else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp,"fload");}else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp,"iload");}else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp,"astore");}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){
             strcpy(temp,"astore");
@@ -346,12 +363,12 @@ Factor
     }
     | TRUE {
         strcpy(type, "Z");
-        CODEGEN("ldc 1\n");
+        CODEGEN("iconst_1\n");
         $$ = "Z";
     }
     | FALSE {
         strcpy(type, "Z");
-        CODEGEN("ldc 0\n");
+        CODEGEN("iconst_0\n");
         $$ = "Z";
     }
     | ID {strcpy(tempname, $<s_val>1);} '[' INT_LIT ']'{} 
