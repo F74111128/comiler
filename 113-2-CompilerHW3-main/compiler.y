@@ -68,6 +68,8 @@
     char cvt[3];
     char type_temp[20];
     int error=0,undefine=0;
+    int exist=0;
+
 %}
 
 %error-verbose
@@ -396,16 +398,16 @@ Type
     | '[' INT ';' INT_LIT { } ']' { $$ = "array"; }
 ; 
 OPTIONAL_NEWLINE
-    : NEWLINE { yylineno++; }
+    : NEWLINE { yylineno++; }    
     |
 ;
 STORE_DATA
-    : INT_LIT {CODEGEN("ldc %d\n",$<i_val>1);CODEGEN("istore %d\n",symbol_index[scope_level]);insert_symbol(tempname,mut, "i32",  yylineno,"-");mut=0;}
-    | FLOAT_LIT {CODEGEN("ldc_w %f\n",$<f_val>1);CODEGEN("fstore %d\n",symbol_index[scope_level]);insert_symbol(tempname,mut, "f32",  yylineno,"-");mut=0;}
-    | '"'STRING_LIT '"' {CODEGEN("ldc \"%s\"\n",$<s_val>1);CODEGEN("astore %d\n",symbol_index[scope_level]);insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
-    | TRUE {CODEGEN("ldc 1\n");CODEGEN("istore %d\n",symbol_index[scope_level]);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
-    | FALSE {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",symbol_index[scope_level]);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
-    |  {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",symbol_index[scope_level]);insert_symbol(tempname,mut,type_temp,  yylineno,"-");mut=0;}
+     : INT_LIT {CODEGEN("ldc %d\n",$<i_val>1);CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut, "i32",  yylineno,"-");mut=0;}
+    | FLOAT_LIT {CODEGEN("ldc_w %f\n",$<f_val>1);CODEGEN("fstore %d\n",addr);insert_symbol(tempname,mut, "f32",  yylineno,"-");mut=0;}
+    | '"'STRING_LIT '"' {CODEGEN("ldc \"%s\"\n",$<s_val>1);CODEGEN("astore %d\n",addr);insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
+    | TRUE {CODEGEN("ldc 1\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
+    | FALSE {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
+    |  {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut,type_temp,  yylineno,"-");mut=0;}
     | '[' INT_LIT {}  OPTION_ELEMENT {insert_symbol(tempname,mut, "array",  yylineno,"-");mut=0;} 
     | '"' '"' {insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
 ;
