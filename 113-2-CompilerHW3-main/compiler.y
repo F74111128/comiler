@@ -109,6 +109,7 @@
 %left '>' '<' GEQ LEQ EQL NEQ
 %left '+' '-'
 %left '*' '/' '%'
+%left AS
 %right '!'
 
 /* Nonterminal with return, which need to sepcify type */
@@ -188,9 +189,11 @@ FunctionDeclStmt
             if(strcmp(type,"S")==0||strcmp(type,"String")==0){strcpy(type,"Ljava/lang/String;");}
             else if(strcmp(type,"A")==0){strcpy(type,"Ljava/lang/Object;");}
         } ')' ';' {CODEGEN("invokevirtual java/io/PrintStream/println(%s)V\n",type); }
-    | ID{  if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp,"istore");strcpy(temp1,"iload");}    else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp,"fstore");strcpy(temp1,"fload");}   else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp,"istore");strcpy(temp1,"iload");}  else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp,"astore");strcpy(temp1,"aload");}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){strcpy(temp,"astore");strcpy(temp1,"aload");
+    | ID{  if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp1,"iload");}    else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp1,"fload");}   else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp1,"iload");}  else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp1,"aload");}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){strcpy(temp1,"aload");
     }}  ASSIGN Expr ';'
     {
+        if(strcmp(($<s_val>4), "I") == 0){strcpy(temp,"istore");}    else if(strcmp($<s_val>4, "F") == 0){strcpy(temp,"fstore");}   else if(strcmp($<s_val>4, "Z") == 0){strcpy(temp,"istore");}  else if(strcmp($<s_val>4, "S") == 0){strcpy(temp,"astore");}else if(strcmp($<s_val>4, "A") == 0){strcpy(temp,"astore");}
+    
     if(strlen(assigntype)!=0)
         CODEGEN("%s\n",assigntype);
     CODEGEN("%s %d\n",temp,lookup_symbol($<s_val>1,"addr"));
@@ -335,27 +338,12 @@ Factor
         }
     }
     | '!' Factor {CODEGEN("iconst_1\n");CODEGEN("ixor\n");}
-    | ID { char temp[20];
-        if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp,"iload");}else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp,"fload");}else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp,"iload");}else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp,"aload");}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){
-            strcpy(temp,"aload");
+    | ID {
+        if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp,"iload");$$ = "I";}else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp,"fload");$$ = "F";}else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp,"iload");$$ = "Z";}else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp,"aload");$$ = "S";}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){
+            strcpy(temp,"aload");$$ = "A";
         }
         CODEGEN("%s %d\n",temp,lookup_symbol($<s_val>1,"addr")); 
         strcpy(tempname, $<s_val>1);
-        if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){
-            $$ = "I";
-        }
-        else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){
-            $$ = "F";
-        }
-        else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){
-            $$ = "Z";
-        }
-        else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){
-            $$ = "S";
-        }
-        else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){
-            $$ = "A";
-        }
     }
 
     | INT_LIT {
@@ -381,15 +369,17 @@ Factor
     | ID {strcpy(tempname, $<s_val>1);} '[' INT_LIT ']'{} 
     | Factor AS Type {
         if (strcmp($<s_val>3, "f32") == 0) {
-            if (strcmp(type, "I") == 0) {
+            if (strcmp($<s_val>1, "I") == 0) {
                 CODEGEN("i2f\n");
             }
             strcpy(type, "F");
+            $$="F";
         } else if (strcmp($<s_val>3, "i32") == 0) {
-            if (strcmp(type, "F") == 0) {
+            if (strcmp($<s_val>1, "F") == 0) {
                 CODEGEN("f2i\n");
             }
             strcpy(type, "I");
+            $$="I";
         }
     }
 ;
@@ -412,7 +402,23 @@ STORE_DATA
     | '"'STRING_LIT '"' {CODEGEN("ldc \"%s\"\n",$<s_val>2);CODEGEN("astore %d\n",addr);insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
     | TRUE {CODEGEN("ldc 1\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
     | FALSE {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
-    |  {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut,type_temp,  yylineno,"-");mut=0;}
+    |  {
+        if(strcmp(type_temp, "i32") == 0) {
+            CODEGEN("ldc 0\n");
+            CODEGEN("istore %d\n",addr);
+        } else if(strcmp(type_temp, "f32") == 0) {
+            CODEGEN("ldc_w 0.0\n");
+            CODEGEN("fstore %d\n",addr);
+        } else if(strcmp(type_temp, "bool") == 0) {
+            CODEGEN("ldc 0\n");
+            CODEGEN("istore %d\n",addr);
+        } else if(strcmp(type_temp, "str") == 0 || strcmp(type_temp, "&str") == 0) {
+            CODEGEN("ldc \"\"\n");
+            CODEGEN("astore %d\n",addr);
+        }
+        insert_symbol(tempname,mut,type_temp,  yylineno,"-");
+        mut=0;
+    }
     | '[' INT_LIT {}  OPTION_ELEMENT {insert_symbol(tempname,mut, "array",  yylineno,"-");mut=0;} 
     | '"' '"' {CODEGEN("ldc \"%s\"\n","");CODEGEN("astore %d\n",addr);insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
 ;
