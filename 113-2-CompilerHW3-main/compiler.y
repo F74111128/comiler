@@ -66,9 +66,10 @@
     char tempname[20];
     int mut = 0;
     char cvt[3];
-    char type_temp[20];
+    char type_temp[20],temp[20],temp1[20],assigntype[20];//temp is assign type
     int error=0,undefine=0;
     int exist=0;
+    
 
 %}
 
@@ -187,22 +188,26 @@ FunctionDeclStmt
             if(strcmp(type,"S")==0||strcmp(type,"String")==0){strcpy(type,"Ljava/lang/String;");}
             else if(strcmp(type,"A")==0){strcpy(type,"Ljava/lang/Object;");}
         } ')' ';' {CODEGEN("invokevirtual java/io/PrintStream/println(%s)V\n",type); }
-    | ID {char temp[20];    if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp,"iload");}    else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp,"fload");}   else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp,"iload");}  else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp,"aload");}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){strcpy(temp,"aload");
+    | ID{  if(strcmp(lookup_symbol_type($<s_val>1), "i32") == 0){strcpy(temp,"istore");strcpy(temp1,"iload");}    else if(strcmp(lookup_symbol_type($<s_val>1), "f32") == 0){strcpy(temp,"fstore");strcpy(temp1,"fload");}   else if(strcmp(lookup_symbol_type($<s_val>1), "bool") == 0){strcpy(temp,"istore");strcpy(temp1,"iload");}  else if(strcmp(lookup_symbol_type($<s_val>1), "str") == 0){strcpy(temp,"astore");strcpy(temp1,"aload");}else if(strcmp(lookup_symbol_type($<s_val>1), "array") == 0){strcpy(temp,"astore");strcpy(temp1,"aload");
+    }}  ASSIGN Expr ';'
+    {
+    if(strlen(assigntype)!=0)
+        CODEGEN("%s\n",assigntype);
+    CODEGEN("%s %d\n",temp,lookup_symbol($<s_val>1,"addr"));
+    strcpy(assigntype,"");
     }
-    CODEGEN("%s %d\n",temp,lookup_symbol($<s_val>1,"addr"));} ASSIGN Expr ';'{
-    } 
 ;
 OPTION_STORE
     : '=' STORE_DATA ';'
     | STORE_DATA ';'
 ;
 ASSIGN
-    : '=' {$$ = "ASSIGN";}
-    | ADD_ASSIGN {$$ = "ADD_ASSIGN";}
-    | SUB_ASSIGN {$$ = "SUB_ASSIGN";}
-    | MUL_ASSIGN {$$ = "MUL_ASSIGN";}
-    | DIV_ASSIGN {$$ = "DIV_ASSIGN";}
-    | REM_ASSIGN {$$ = "REM_ASSIGN";}
+    : '=' 
+    | ADD_ASSIGN {CODEGEN("%s %d\n",temp1,lookup_symbol($<s_val>1,"addr")); if(strcmp(type,"I")==0){strcpy(assigntype,"iadd");}else if(strcmp(type,"F")==0){strcpy(assigntype,"fadd");}}
+    | SUB_ASSIGN {CODEGEN("%s %d\n",temp1,lookup_symbol($<s_val>1,"addr"));if(strcmp(type,"I")==0){strcpy(assigntype,"isub");}else if(strcmp(type,"F")==0){strcpy(assigntype,"fsub");}}
+    | MUL_ASSIGN {CODEGEN("%s %d\n",temp1,lookup_symbol($<s_val>1,"addr"));if(strcmp(type,"I")==0){strcpy(assigntype,"imul");}else if(strcmp(type,"F")==0){strcpy(assigntype,"fmul");}}
+    | DIV_ASSIGN {CODEGEN("%s %d\n",temp1,lookup_symbol($<s_val>1,"addr"));if(strcmp(type,"I")==0){strcpy(assigntype,"idiv");}else if(strcmp(type,"F")==0){strcpy(assigntype,"fdiv");}}
+    | REM_ASSIGN {CODEGEN("%s %d\n",temp1,lookup_symbol($<s_val>1,"addr"));if(strcmp(type,"I")==0){strcpy(assigntype,"irem");}else if(strcmp(type,"F")==0){strcpy(assigntype,"error");}}
 ;
 Expr        : LORExpr { $$ = $1;}
             | DATA
@@ -409,7 +414,7 @@ STORE_DATA
     | FALSE {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut, "bool",  yylineno,"-");mut=0;}
     |  {CODEGEN("ldc 0\n");CODEGEN("istore %d\n",addr);insert_symbol(tempname,mut,type_temp,  yylineno,"-");mut=0;}
     | '[' INT_LIT {}  OPTION_ELEMENT {insert_symbol(tempname,mut, "array",  yylineno,"-");mut=0;} 
-    | '"' '"' {insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
+    | '"' '"' {CODEGEN("ldc \"%s\"\n","");CODEGEN("astore %d\n",addr);insert_symbol(tempname,mut, "str",  yylineno,"-");mut=0;}
 ;
 OPTION_ELEMENT
     : ',' INT_LIT{} OPTION_ELEMENT
