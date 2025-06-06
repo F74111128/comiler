@@ -67,7 +67,7 @@
     int mut = 0;
     char cvt[3];
     char type_temp[20],temp[20],temp1[20],assigntype[20];//temp is assign type
-    int error=0,undefine=0;
+    int error=0,undefine=0,label=1,end_label=0,else_label=0;
     int exist=0;
     
 
@@ -111,6 +111,8 @@
 %left '*' '/' '%'
 %left AS
 %right '!'
+%nonassoc IF
+%nonassoc ELSE
 
 /* Nonterminal with return, which need to sepcify type */
 %type <s_val> Type Expr LORExpr LANDExpr EqualityExpr RelExpr AddExpr Term Factor ASSIGN DATA
@@ -149,18 +151,32 @@ WhileStatement
         }
         GlobalStatementList '}'{dump_symbol();}
 IfStatement
-    : IF  Expr  '{' {
+    : IF Expr {  
+        else_label = label++;
+        CODEGEN("ifeq L%d\n", else_label);
+    } '{' {
         scope_level++;
         create_symbol();
-        }
-        GlobalStatementList '}'{dump_symbol();}
-    | IfStatement ELSE '{' 
-        {
+    } GlobalStatementList '}' {
+        dump_symbol();
+    } OptionalElse
+;
+
+OptionalElse
+    : ELSE {
+        end_label = label++;
+        CODEGEN("goto L%d\n", end_label);
+        CODEGEN("L%d:\n", else_label);
+    } '{' {
         scope_level++;
         create_symbol();
-        }
-         GlobalStatementList '}'{dump_symbol();}
-    | OPTIONAL_NEWLINE
+    } GlobalStatementList '}' {
+        CODEGEN("L%d:\n", end_label);
+        dump_symbol();
+    }
+    | {
+        CODEGEN("L%d:\n", else_label);
+    }
 ;
 
 FunctionDeclStmt
@@ -227,10 +243,28 @@ LANDExpr    : LANDExpr LAND EqualityExpr {
             | EqualityExpr{ $$ = $1;};
             | OPTIONAL_NEWLINE
 EqualityExpr: EqualityExpr EQL RelExpr { 
-
+                // x == y 
+                if(strcmp($1,"I")==0 && strcmp($3,"I")==0){
+                    CODEGEN("if_icmpeq L_eq_true%d\n", label);
+                    CODEGEN("iconst_0\n");
+                    CODEGEN("goto L_eq_end%d\n", label);
+                    CODEGEN("L_eq_true%d:\n", label);
+                    CODEGEN("iconst_1\n");
+                    CODEGEN("L_eq_end%d:\n", label++);
+                }
+                $$ = "Z";
             }
             | EqualityExpr NEQ RelExpr { 
-
+                // x != y 
+                if(strcmp($1,"I")==0 && strcmp($3,"I")==0){
+                    CODEGEN("if_icmpne L_ne_true%d\n", label);
+                    CODEGEN("iconst_0\n");
+                    CODEGEN("goto L_ne_end%d\n", label);
+                    CODEGEN("L_ne_true%d:\n", label);
+                    CODEGEN("iconst_1\n");
+                    CODEGEN("L_ne_end%d:\n", label++);
+                }
+                $$ = "Z";
             }
             | RelExpr{ $$ = $1;}
             | OPTIONAL_NEWLINE
