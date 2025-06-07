@@ -67,7 +67,7 @@
     int mut = 0;
     char cvt[3];
     char type_temp[20],temp[20],temp1[20],assigntype[20];//temp is assign type
-    int error=0,undefine=0,label=1,end_label=0,else_label=0;
+    int error=0,undefine=0,label=1,end_label=0,else_label=0,while_end_label=0,while_start_label=0;
     int exist=0;
     
 
@@ -145,11 +145,21 @@ GlobalStatement
 ;
 
 WhileStatement
-    : WHILE Expr '{' {
+    : WHILE {
+        while_start_label = label++;
+        while_end_label = label++;
+        CODEGEN("L_while_start%d:\n", while_start_label);
+    } Expr {
+        CODEGEN("ifeq L_while_end%d\n", while_end_label);
+    } '{' {
         scope_level++;
         create_symbol();
-        }
-        GlobalStatementList '}'{dump_symbol();}
+    } GlobalStatementList '}' {
+
+        CODEGEN("goto L_while_start%d\n", while_start_label);
+        CODEGEN("L_while_end%d:\n", while_end_label);
+        dump_symbol();
+    }
 IfStatement
     : IF Expr {  
         else_label = label++;
@@ -290,8 +300,16 @@ RelExpr     : RelExpr '>' AddExpr {
                 }
             }
             | RelExpr '<' AddExpr {
-                $$ = "Z"; 
-            }
+                  $$ = "Z"; 
+                  if(strcmp($1,"I")==0 && strcmp($3,"I")==0){
+                      CODEGEN("if_icmpge L_lt_false%d\n", label);
+                      CODEGEN("iconst_1\n");
+                      CODEGEN("goto L_lt_end%d\n", label);
+                      CODEGEN("L_lt_false%d:\n", label);
+                      CODEGEN("iconst_0\n");
+                      CODEGEN("L_lt_end%d:\n", label++);
+                  }
+              }
             | RelExpr GEQ AddExpr { 
                 $$ = "Z"; 
             }
